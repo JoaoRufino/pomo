@@ -15,7 +15,7 @@ import (
 )
 
 // C is the global configuration with "." for delimeter
-var K = koanf.New("/.pomo/")
+var K = koanf.New(".")
 
 // File loads configuration from a file
 // https://github.com/knadh/koanf/blob/master/examples/read-file/main.go
@@ -47,11 +47,12 @@ func ConfFromDefaults(k *koanf.Koanf) error {
 		"pidfile": "",
 
 		// Server Configuration
-		"server.name":    "pomo",
-		"server.version": "debug",
-		"server.host":    "",
-		"server.port":    "8080",
-		"server.socket":  defaultConfigPath() + "/pomo.sock",
+		"server.name":           "pomo",
+		"server.version":        "debug",
+		"server.host":           "",
+		"server.port":           "8080",
+		"server.socket":         defaultConfigPath() + "/pomo.sock",
+		"server.datetimeformat": "2006-01-02 15:04",
 
 		// Database Settings
 		"database.username":              "postgres",
@@ -80,5 +81,5 @@ func defaultConfigPath() string {
 		fmt.Printf("Error:\n%s\n", err)
 		os.Exit(1)
 	}
-	return path.Join(u.HomeDir, "/.pomo/config.json")
+	return path.Join(u.HomeDir, "/.pomo")
 }

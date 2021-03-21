@@ -10,7 +10,7 @@ import (
 // InitLogger loads a global logger based on a koanf configuration
 func InitLogger(k *koanf.Koanf) {
 
-	logConfig := zap.NewProductionConfig()
+	logConfig := zap.NewDevelopmentConfig()
 	logConfig.Sampling = nil
 
 	// Log Level

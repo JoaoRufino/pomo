@@ -14,36 +14,55 @@ import (
 	cli "github.com/spf13/cobra"
 )
 
-var (
-	asJSON *bool
-	assend *bool
-	all    *bool
-	limit  *int
-	period *string
-)
+type listOptions struct {
+	asJSON   bool
+	sort     bool
+	all      bool
+	limit    int
+	duration string
+}
+
+func validateTaskListOptions(opts *listOptions) (*listOptions, error) {
+
+	if opts.limit <= 1 {
+		opts.limit = 1
+	}
+
+	_, err := time.ParseDuration(opts.duration)
+	if err != nil {
+		opts.duration = "24h"
+	}
+
+	return opts, nil
+}
 
 // NewConfigCommand returns a cobra command for `config` subcommands
 func NewTaskListCommand(cmd *cli.Command) *cobra.Command {
+
+	options := listOptions{}
+
 	taskListCmd := &cli.Command{
-		Use:   "list",
+		Use:   "list [OPTIONS]",
 		Short: "List tasks",
 		Long:  `List all tasks`,
 		Run: func(cmd *cli.Command, args []string) {
-			_list(args...)
+			_list(&options)
 		},
 	}
 
-	asJSON = taskListCmd.Flags().BoolP("json", "j", false, "output task history as JSON")
-	assend = taskListCmd.Flags().BoolP("sort", "s", false, "sort tasks assending in age")
-	all = taskListCmd.Flags().BoolP("all", "a", true, "output all tasks")
-	limit = taskListCmd.Flags().IntP("limit", "n", 0, "limit the number of results by n")
-	period = taskListCmd.Flags().StringP("duration", "d", "24h", "show tasks within this duration")
+	flags := taskListCmd.Flags()
+
+	flags.BoolVarP(&options.asJSON, "json", "j", false, "output task history as JSON")
+	flags.BoolVarP(&options.sort, "sort", "s", false, "sort tasks assending in age")
+	flags.BoolVarP(&options.all, "all", "a", true, "output all tasks")
+	flags.IntVarP(&options.limit, "limit", "n", 0, "limit the number of results by n")
+	flags.StringVarP(&options.duration, "duration", "d", "24h", "show tasks within this duration")
 
 	return taskListCmd
 }
 
-func _list(args ...string) {
-	parsed, err := time.ParseDuration(*period)
+func _list(options *listOptions) {
+	parsed, err := time.ParseDuration(options.duration)
 	maybe(err)
 	db, err := pomo.NewStore(conf.K.String("database.path"))
 	maybe(err)
@@ -51,16 +70,16 @@ func _list(args ...string) {
 	maybe(db.With(func(tx *sql.Tx) error {
 		tasks, err := db.ReadTasks(tx)
 		maybe(err)
-		if *assend {
+		if options.sort {
 			sort.Sort(sort.Reverse(pomo.ByID(tasks)))
 		}
-		if !*all {
+		if !options.all {
 			tasks = pomo.After(time.Now().Add(-parsed), tasks)
 		}
-		if *limit > 0 && (len(tasks) > *limit) {
-			tasks = tasks[0:*limit]
+		if options.limit > 0 && (len(tasks) > options.limit) {
+			tasks = tasks[0:options.limit]
 		}
-		if *asJSON {
+		if options.asJSON {
 			maybe(json.NewEncoder(os.Stdout).Encode(tasks))
 			return nil
 		}

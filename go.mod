@@ -25,4 +25,5 @@ require (
 	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d
+	gotest.tools/v3 v3.0.3 // indirect
 )

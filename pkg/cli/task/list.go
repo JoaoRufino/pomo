@@ -7,11 +7,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/conf"
+	"github.com/joao.rufino/pomo/pkg/cli"
 	runnerC "github.com/joao.rufino/pomo/pkg/runner"
 	pomo "github.com/joao.rufino/pomo/pkg/server"
+	"github.com/joao.rufino/pomo/pkg/server/models"
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
 )
 
 type listOptions struct {
@@ -37,16 +37,16 @@ func validateTaskListOptions(opts *listOptions) (*listOptions, error) {
 }
 
 // NewConfigCommand returns a cobra command for `config` subcommands
-func NewTaskListCommand(cmd *cli.Command) *cobra.Command {
+func NewTaskListCommand(pomoCli cli.Cli) *cobra.Command {
 
 	options := listOptions{}
 
-	taskListCmd := &cli.Command{
+	taskListCmd := &cobra.Command{
 		Use:   "list [OPTIONS]",
 		Short: "List tasks",
 		Long:  `List all tasks`,
-		Run: func(cmd *cli.Command, args []string) {
-			_list(&options)
+		Run: func(cmd *cobra.Command, args []string) {
+			_list(pomoCli, &options)
 		},
 	}
 
@@ -61,30 +61,30 @@ func NewTaskListCommand(cmd *cli.Command) *cobra.Command {
 	return taskListCmd
 }
 
-func _list(options *listOptions) {
+func _list(pomoCli cli.Cli, options *listOptions) {
 	parsed, err := time.ParseDuration(options.duration)
-	maybe(err)
-	db, err := pomo.NewStore(conf.K.String("database.path"))
-	maybe(err)
+	maybe(err, pomoCli.Logger())
+	db, err := pomo.NewStore(pomoCli.Config().String("database.path"))
+	maybe(err, pomoCli.Logger())
 	defer db.Close()
 	maybe(db.With(func(tx *sql.Tx) error {
 		tasks, err := db.ReadTasks(tx)
-		maybe(err)
+		maybe(err, pomoCli.Logger())
 		if options.sort {
-			sort.Sort(sort.Reverse(pomo.ByID(tasks)))
+			sort.Sort(sort.Reverse(models.ByID(tasks)))
 		}
 		if !options.all {
-			tasks = pomo.After(time.Now().Add(-parsed), tasks)
+			tasks = models.After(time.Now().Add(-parsed), tasks)
 		}
 		if options.limit > 0 && (len(tasks) > options.limit) {
 			tasks = tasks[0:options.limit]
 		}
 		if options.asJSON {
-			maybe(json.NewEncoder(os.Stdout).Encode(tasks))
+			maybe(json.NewEncoder(os.Stdout).Encode(tasks), pomoCli.Logger())
 			return nil
 		}
-		maybe(err)
-		runnerC.SummerizeTasks(tasks)
+		maybe(err, pomoCli.Logger())
+		runnerC.SummerizeTasks(pomoCli, tasks)
 		return nil
-	}))
+	}), pomoCli.Logger())
 }

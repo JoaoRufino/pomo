@@ -1,8 +1,12 @@
 package task
 
 import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
 	"testing"
 
+	"github.com/joao.rufino/pomo/pkg/cli/test"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 )
@@ -71,5 +75,61 @@ func TestTaskListBuildContainerListOptions(t *testing.T) {
 		assert.Check(t, is.Equal(c.expectedLimit, options.limit))
 		assert.Check(t, is.Equal(c.expectedDuration, options.duration))
 
+	}
+}
+func TestTaskListErrors(t *testing.T) {
+	testCases := []struct {
+		args          []string
+		flags         map[string]string
+		taskListFunc  func(listOptions) error
+		expectedError string
+	}{
+		{
+			args: []string{"--in"},
+			flags: map[string]string{
+				"format": "{{invalid}}",
+			},
+			expectedError: `unknown flag --in`},
+		{
+			flags: map[string]string{
+				"format": "{{list}}",
+			},
+			expectedError: `wrong number of args for join`,
+		},
+		{
+			taskListFunc: func(listOptions) error {
+				return fmt.Errorf("error listing containers")
+			},
+			expectedError: "error listing containers",
+		},
+	}
+
+	buf := new(bytes.Buffer)
+	mockCli := test.NewMockCli()
+	cmd := NewTaskListCommand(mockCli)
+	cmd.SetOut(buf)
+
+	for _, tc := range testCases {
+		cmd.SetArgs(tc.args)
+		for key, value := range tc.flags {
+			cmd.Flags().Set(key, value)
+		}
+		cmd.Execute()
+		assert.Check(t, is.Equal(buf.String(), tc.expectedError))
+	}
+}
+
+func Test_ExecuteCommand(t *testing.T) {
+	cmd := NewTaskListCommand(nil)
+	b := bytes.NewBufferString("")
+	cmd.SetOut(b)
+	cmd.SetArgs([]string{"--in", "testisawesome"})
+	cmd.Execute()
+	out, err := ioutil.ReadAll(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(out) != "testisawesome" {
+		t.Fatalf("expected \"%s\" got \"%s\"", "testisawesome", string(out))
 	}
 }

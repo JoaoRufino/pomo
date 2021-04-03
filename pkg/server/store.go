@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joao.rufino/pomo/pkg/server/models"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -43,7 +44,7 @@ func (s Store) With(fns ...func(tx *sql.Tx) error) error {
 	return tx.Commit()
 }
 
-func (s Store) CreateTask(tx *sql.Tx, task Task) (int, error) {
+func (s Store) CreateTask(tx *sql.Tx, task models.Task) (int, error) {
 	var taskID int
 	_, err := tx.Exec(
 		"INSERT INTO task (message,pomodoros,duration,tags) VALUES ($1,$2,$3,$4)",
@@ -62,18 +63,18 @@ func (s Store) CreateTask(tx *sql.Tx, task Task) (int, error) {
 	return taskID, nil
 }
 
-func (s Store) ReadTasks(tx *sql.Tx) ([]*Task, error) {
+func (s Store) ReadTasks(tx *sql.Tx) ([]*models.Task, error) {
 	rows, err := tx.Query(`SELECT rowid,message,pomodoros,duration,tags FROM task`)
 	if err != nil {
 		return nil, err
 	}
-	tasks := []*Task{}
+	tasks := []*models.Task{}
 	for rows.Next() {
 		var (
 			tags        string
 			strDuration string
 		)
-		task := &Task{Pomodoros: []*Pomodoro{}}
+		task := &models.Task{Pomodoros: []*models.Pomodoro{}}
 		err = rows.Scan(&task.ID, &task.Message, &task.NPomodoros, &strDuration, &tags)
 		if err != nil {
 			return nil, err
@@ -107,8 +108,8 @@ func (s Store) DeleteTask(tx *sql.Tx, taskID int) error {
 	return nil
 }
 
-func (s Store) ReadTask(tx *sql.Tx, taskID int) (*Task, error) {
-	task := &Task{}
+func (s Store) ReadTask(tx *sql.Tx, taskID int) (*models.Task, error) {
+	task := &models.Task{}
 	var (
 		tags        string
 		strDuration string
@@ -126,7 +127,7 @@ func (s Store) ReadTask(tx *sql.Tx, taskID int) (*Task, error) {
 	return task, nil
 }
 
-func (s Store) CreatePomodoro(tx *sql.Tx, taskID int, pomodoro Pomodoro) error {
+func (s Store) CreatePomodoro(tx *sql.Tx, taskID int, pomodoro models.Pomodoro) error {
 	_, err := tx.Exec(
 		`INSERT INTO pomodoro (task_id, start, end) VALUES ($1, $2, $3)`,
 		taskID,
@@ -136,18 +137,18 @@ func (s Store) CreatePomodoro(tx *sql.Tx, taskID int, pomodoro Pomodoro) error {
 	return err
 }
 
-func (s Store) ReadPomodoros(tx *sql.Tx, taskID int) ([]*Pomodoro, error) {
+func (s Store) ReadPomodoros(tx *sql.Tx, taskID int) ([]*models.Pomodoro, error) {
 	rows, err := tx.Query(`SELECT start,end FROM pomodoro WHERE task_id = $1`, &taskID)
 	if err != nil {
 		return nil, err
 	}
-	pomodoros := []*Pomodoro{}
+	pomodoros := []*models.Pomodoro{}
 	for rows.Next() {
 		var (
 			startStr string
 			endStr   string
 		)
-		pomodoro := &Pomodoro{}
+		pomodoro := &models.Pomodoro{}
 		err = rows.Scan(&startStr, &endStr)
 		if err != nil {
 			return nil, err

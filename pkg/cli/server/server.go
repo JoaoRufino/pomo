@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/joao.rufino/pomo/pkg/cli"
+
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
 )
 
 // server command
@@ -17,7 +18,7 @@ import (
 ///
 
 // NewServerCommand returns a cobra command for `server` subcommands
-func NewServerCommand(cmd *cli.Command) *cobra.Command {
+func NewServerCommand(pomoCli *cli.PomoCli) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:   "server",
 		Short: "operations regarding the server",
@@ -28,9 +29,9 @@ func NewServerCommand(cmd *cli.Command) *cobra.Command {
 	}
 
 	serverCmd.AddCommand(
-		NewServerConfigCommand(serverCmd),
-		NewServerInitCommand(serverCmd),
-		NewServerVersionCommand(serverCmd),
+		NewServerConfigCommand(pomoCli),
+		NewServerInitCommand(pomoCli),
+		NewServerVersionCommand(pomoCli),
 	)
 	return serverCmd
 }

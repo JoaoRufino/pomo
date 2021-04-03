@@ -14,9 +14,6 @@ import (
 	"github.com/knadh/koanf/providers/file"
 )
 
-// C is the global configuration with "." for delimeter
-var K = koanf.New(".")
-
 // File loads configuration from a file
 // https://github.com/knadh/koanf/blob/master/examples/read-file/main.go
 func ConfFromFile(k *koanf.Koanf, configFile string) error {
@@ -49,6 +46,7 @@ func ConfFromDefaults(k *koanf.Koanf) error {
 		// Server Configuration
 		"server.name":           "pomo",
 		"server.version":        "debug",
+		"server.type":           "unix",
 		"server.host":           "",
 		"server.port":           "8080",
 		"server.socket":         defaultConfigPath() + "/pomo.sock",

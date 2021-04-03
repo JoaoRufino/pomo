@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/conf"
+	"github.com/joao.rufino/pomo/pkg/cli"
 	runnerC "github.com/joao.rufino/pomo/pkg/runner"
 	pomo "github.com/joao.rufino/pomo/pkg/server"
+	"github.com/joao.rufino/pomo/pkg/server/comms/unix"
+	"github.com/joao.rufino/pomo/pkg/server/models"
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
 )
 
 var (
@@ -20,13 +21,13 @@ var (
 )
 
 // NewConfigCommand returns a cobra command for `config` subcommands
-func NewTaskCreateCommand(cmd *cli.Command) *cobra.Command {
-	taskCreateCmd := &cli.Command{
+func NewTaskCreateCommand(pomoCli cli.Cli) *cobra.Command {
+	taskCreateCmd := &cobra.Command{
 		Use:   "create",
 		Short: "create task",
 		Long:  `create task`,
-		Run: func(cmd *cli.Command, args []string) {
-			_create(args...)
+		Run: func(cmd *cobra.Command, args []string) {
+			_create(pomoCli)
 		},
 	}
 	//optional flags
@@ -43,13 +44,13 @@ func NewTaskCreateCommand(cmd *cli.Command) *cobra.Command {
 }
 
 // creates a task
-func _create(args ...string) {
+func _create(pomoCli cli.Cli) {
 	parsed, err := time.ParseDuration(*duration)
-	maybe(err)
-	db, err := pomo.NewStore(conf.K.String("database.path"))
-	maybe(err)
+	maybe(err, pomoCli.Logger())
+	db, err := pomo.NewStore(pomoCli.Config().String("database.path"))
+	maybe(err, pomoCli.Logger())
 	defer db.Close()
-	task := &pomo.Task{
+	task := &models.Task{
 		Message:    *message,
 		Tags:       *tags,
 		NPomodoros: *pomodoros,
@@ -62,12 +63,12 @@ func _create(args ...string) {
 		}
 		task.ID = id
 		return nil
-	}))
+	}), pomoCli.Logger())
 	if *start {
-		runner, err := runnerC.NewTaskRunner(task)
-		maybe(err)
-		server, err := pomo.NewServer(runner)
-		maybe(err)
+		runner, err := runnerC.NewTaskRunner(pomoCli, task)
+		maybe(err, pomoCli.Logger())
+		server, err := unix.NewServer(pomoCli, runner)
+		maybe(err, pomoCli.Logger())
 		server.Start()
 		defer server.Stop()
 		runner.Start()

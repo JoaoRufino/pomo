@@ -1,6 +1,6 @@
 package main
 
-import "github.com/joao.rufino/pomo/pkg/cli"
+import cli "github.com/joao.rufino/pomo/pkg/cli/root"
 
 func main() {
 	cli.Execute()

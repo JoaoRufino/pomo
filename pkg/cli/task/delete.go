@@ -3,10 +3,9 @@ package task
 import (
 	"database/sql"
 
-	"github.com/joao.rufino/pomo/pkg/conf"
+	"github.com/joao.rufino/pomo/pkg/cli"
 	pomo "github.com/joao.rufino/pomo/pkg/server"
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
 )
 
 var (
@@ -14,13 +13,13 @@ var (
 )
 
 // NewConfigCommand returns a cobra command for `config` subcommands
-func NewTaskDeleteCommand(cmd *cli.Command) *cobra.Command {
-	taskDeleteCmd := &cli.Command{
+func NewTaskDeleteCommand(pomoCli cli.Cli) *cobra.Command {
+	taskDeleteCmd := &cobra.Command{
 		Use:   "delete",
 		Short: "delete task",
 		Long:  `delete task using id`,
-		Run: func(cmd *cli.Command, args []string) {
-			_delete(args...)
+		Run: func(cmd *cobra.Command, args []string) {
+			_delete(pomoCli)
 		},
 	}
 
@@ -29,11 +28,11 @@ func NewTaskDeleteCommand(cmd *cli.Command) *cobra.Command {
 	return taskDeleteCmd
 }
 
-func _delete(args ...string) {
-	db, err := pomo.NewStore(conf.K.String("database.path"))
-	maybe(err)
+func _delete(pomoCli cli.Cli) {
+	db, err := pomo.NewStore(pomoCli.Config().String("database.path"))
+	maybe(err, pomoCli.Logger())
 	defer db.Close()
 	maybe(db.With(func(tx *sql.Tx) error {
 		return db.DeleteTask(tx, *delete_taskId)
-	}))
+	}), pomoCli.Logger())
 }

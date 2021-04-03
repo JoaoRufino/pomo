@@ -6,15 +6,15 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/joao.rufino/pomo/pkg/conf"
-	"github.com/joao.rufino/pomo/pkg/server"
+	"github.com/joao.rufino/pomo/pkg/cli"
+	"github.com/joao.rufino/pomo/pkg/server/models"
 )
 
-func SummerizeTasks(tasks []*server.Task) {
+func SummerizeTasks(pomoCli cli.Cli, tasks []*models.Task) {
 	for _, task := range tasks {
 		var start string
 		if len(task.Pomodoros) > 0 {
-			start = task.Pomodoros[0].Start.Format(conf.K.String("server.datetimeformat"))
+			start = task.Pomodoros[0].Start.Format(pomoCli.Config().String("server.datetimeformat"))
 		}
 		fmt.Printf("%d: [%s] [%s] ", task.ID, start, task.Duration.Truncate(time.Second))
 		// a list of green/yellow/red pomodoros
@@ -69,12 +69,12 @@ func SummerizeTasks(tasks []*server.Task) {
 	}
 }
 
-func OutputStatus(status server.Status) {
+func OutputStatus(status models.Status) {
 	state := "?"
-	if status.State >= server.RUNNING {
+	if status.State >= models.RUNNING {
 		state = string(status.State.String()[0])
 	}
-	if status.State == server.RUNNING {
+	if status.State == models.RUNNING {
 		fmt.Printf("%s [%d/%d] %s", state, status.Count, status.NPomodoros, status.Remaining)
 	} else {
 		fmt.Printf("%s [%d/%d] -", state, status.Count, status.NPomodoros)

@@ -1,11 +1,11 @@
 package task
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/joao.rufino/pomo/pkg/cli"
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 // task command
@@ -18,7 +18,7 @@ import (
 //   │   └── status
 ///
 // NewServerCommand returns a cobra command for `server` subcommands
-func NewTaskCommand(cmd *cli.Command) *cobra.Command {
+func NewTaskCommand(pomoCli cli.Cli) *cobra.Command {
 	taskCmd := &cobra.Command{
 		Use:   "task",
 		Short: "operations regarding the tasks",
@@ -28,18 +28,18 @@ func NewTaskCommand(cmd *cli.Command) *cobra.Command {
 		},
 	}
 	taskCmd.AddCommand(
-		NewTaskCreateCommand(taskCmd),
-		NewTaskDeleteCommand(taskCmd),
-		NewTaskListCommand(taskCmd),
-		NewTaskStartCommand(taskCmd),
-		NewTaskStatusCommand(taskCmd),
+		NewTaskCreateCommand(pomoCli),
+		NewTaskDeleteCommand(pomoCli),
+		NewTaskListCommand(pomoCli),
+		NewTaskStartCommand(pomoCli),
+		NewTaskStatusCommand(pomoCli),
 	)
 	return taskCmd
 }
 
-func maybe(err error) {
+func maybe(err error, logger *zap.SugaredLogger) {
 	if err != nil {
-		fmt.Printf("Error:\n%s\n", err)
+		logger.Fatalf("Error:%s\n", err)
 		os.Exit(1)
 	}
 }

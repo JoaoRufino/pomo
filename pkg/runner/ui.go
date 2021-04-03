@@ -6,13 +6,13 @@ import (
 
 	termui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
-	"github.com/joao.rufino/pomo/pkg/server"
+	"github.com/joao.rufino/pomo/pkg/server/models"
 )
 
-func render(wheel *server.Wheel, status *server.Status) *widgets.Paragraph {
+func render(wheel *models.Wheel, status *models.Status) *widgets.Paragraph {
 	var text string
 	switch status.State {
-	case server.RUNNING:
+	case models.RUNNING:
 		text = fmt.Sprintf(
 			`[%d/%d] Pomodoros completed
 
@@ -26,7 +26,7 @@ func render(wheel *server.Wheel, status *server.Status) *widgets.Paragraph {
 			wheel,
 			status.Remaining,
 		)
-	case server.BREAKING:
+	case models.BREAKING:
 		text = `It is time to take a break!
 
 		Once you are ready, press [enter] 
@@ -34,7 +34,7 @@ func render(wheel *server.Wheel, status *server.Status) *widgets.Paragraph {
 
 		[q] - quit [p] - pause
 		`
-	case server.PAUSED:
+	case models.PAUSED:
 		text = `Pomo is suspended.
 
 		Press [p] to continue.
@@ -42,7 +42,7 @@ func render(wheel *server.Wheel, status *server.Status) *widgets.Paragraph {
 
 		[q] - quit [p] - unpause
 		`
-	case server.COMPLETE:
+	case models.COMPLETE:
 		text = `This session has concluded. 
 		
 		Press [q] to exit.
@@ -59,7 +59,7 @@ func render(wheel *server.Wheel, status *server.Status) *widgets.Paragraph {
 	par.SetRect(0, 10, 20, 20)
 	par.Title = fmt.Sprintf("Pomo - %s", status.State)
 	par.BorderStyle.Fg = termui.ColorRed
-	if status.State == server.RUNNING {
+	if status.State == models.RUNNING {
 		par.BorderStyle.Fg = termui.ColorGreen
 	}
 	return par
@@ -96,7 +96,7 @@ func StartUI(runner *TaskRunner) {
 	if err != nil {
 		panic(err)
 	}
-	wheel := server.Wheel(0)
+	wheel := models.Wheel(0)
 
 	defer termui.Close()
 

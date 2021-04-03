@@ -1,11 +1,8 @@
 package runner
 
 import (
-	"database/sql"
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/cli"
-	"github.com/joao.rufino/pomo/pkg/server"
 	"github.com/joao.rufino/pomo/pkg/server/models"
 )
 
@@ -16,7 +13,7 @@ type TaskRunner struct {
 	nPomodoros   int
 	origDuration time.Duration
 	state        models.State
-	store        *server.Store
+	client       Client
 	started      time.Time
 	pause        chan bool
 	toggle       chan bool
@@ -24,21 +21,17 @@ type TaskRunner struct {
 	duration     time.Duration
 }
 
-func NewTaskRunner(pomoCli cli.Cli, task *models.Task) (*TaskRunner, error) {
-	store, err := server.NewStore(pomoCli.Config().String("database.path"))
-	if err != nil {
-		return nil, err
-	}
+func NewTaskRunner(client Client, task *models.Task) (*TaskRunner, error) {
 	tr := &TaskRunner{
 		taskID:       task.ID,
 		taskMessage:  task.Message,
 		nPomodoros:   task.NPomodoros,
 		origDuration: task.Duration,
-		store:        store,
+		client:       client,
 		state:        models.State(0),
 		pause:        make(chan bool),
 		toggle:       make(chan bool),
-		notifier:     models.NewXnotifier(pomoCli.Config().String("icon.path")),
+		notifier:     models.NewXnotifier(client.Config().String("icon.path")),
 		duration:     task.Duration,
 	}
 	return tr, nil
@@ -98,9 +91,7 @@ func (t *TaskRunner) run() error {
 			goto loop
 		}
 		pomodoro.End = time.Now()
-		err := t.store.With(func(tx *sql.Tx) error {
-			return t.store.CreatePomodoro(tx, t.taskID, *pomodoro)
-		})
+		err := t.client.CreatePomodoro(t.taskID, *pomodoro)
 		if err != nil {
 			return err
 		}
@@ -117,7 +108,7 @@ func (t *TaskRunner) run() error {
 		<-t.toggle
 
 	}
-	t.notifier.Notify("Pomo", "Pomo session has completed!")
+	t.notifier.Notify("Pomo", "Pomo session has been completed!")
 	t.SetState(models.COMPLETE)
 	return nil
 }
@@ -139,13 +130,13 @@ func (t *TaskRunner) Status() *models.Status {
 	}
 }
 
-func NewMockedTaskRunner(task *models.Task, store *server.Store, notifier models.Notifier) (*TaskRunner, error) {
+func NewMockedTaskRunner(task *models.Task, client Client, notifier models.Notifier) (*TaskRunner, error) {
 	tr := &TaskRunner{
 		taskID:       task.ID,
 		taskMessage:  task.Message,
 		nPomodoros:   task.NPomodoros,
 		origDuration: task.Duration,
-		store:        store,
+		client:       client,
 		state:        models.State(0),
 		pause:        make(chan bool),
 		toggle:       make(chan bool),

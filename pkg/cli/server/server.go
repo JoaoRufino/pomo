@@ -1,10 +1,8 @@
 package server
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/joao.rufino/pomo/pkg/cli"
+	"go.uber.org/zap"
 
 	"github.com/spf13/cobra"
 )
@@ -14,6 +12,7 @@ import (
 //   ├── server
 //   │   ├── config
 //   │   ├── init
+//   |   ├── status
 //   │   └── version
 ///
 
@@ -30,15 +29,15 @@ func NewServerCommand(pomoCli *cli.PomoCli) *cobra.Command {
 
 	serverCmd.AddCommand(
 		NewServerConfigCommand(pomoCli),
+		NewServerStatusCommand(pomoCli),
 		NewServerInitCommand(pomoCli),
 		NewServerVersionCommand(pomoCli),
 	)
 	return serverCmd
 }
 
-func maybe(err error) {
+func maybe(err error, logger *zap.SugaredLogger) {
 	if err != nil {
-		fmt.Printf("Error:\n%s\n", err)
-		os.Exit(1)
+		logger.Fatalf("Error:%s", err)
 	}
 }

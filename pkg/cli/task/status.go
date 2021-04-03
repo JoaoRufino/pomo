@@ -2,8 +2,6 @@ package task
 
 import (
 	"github.com/joao.rufino/pomo/pkg/cli"
-	"github.com/joao.rufino/pomo/pkg/runner/client"
-	"github.com/joao.rufino/pomo/pkg/server/models"
 	"github.com/spf13/cobra"
 
 	runnerC "github.com/joao.rufino/pomo/pkg/runner"
@@ -24,13 +22,7 @@ func NewTaskStatusCommand(pomoCli cli.Cli) *cobra.Command {
 }
 
 func _status(pomoCli cli.Cli) {
-	client, err := client.NewClient(pomoCli.Config())
-	if err != nil {
-		runnerC.OutputStatus(models.Status{})
-		return
-	}
-	defer client.Close()
-	status, err := client.Status()
+	status, err := pomoCli.Client().GetServerStatus()
 	maybe(err, pomoCli.Logger())
 	runnerC.OutputStatus(*status)
 }

@@ -6,15 +6,14 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/joao.rufino/pomo/pkg/cli"
 	"github.com/joao.rufino/pomo/pkg/server/models"
 )
 
-func SummerizeTasks(pomoCli cli.Cli, tasks []*models.Task) {
+func SummerizeTasks(client Client, tasks models.List) {
 	for _, task := range tasks {
 		var start string
 		if len(task.Pomodoros) > 0 {
-			start = task.Pomodoros[0].Start.Format(pomoCli.Config().String("server.datetimeformat"))
+			start = task.Pomodoros[0].Start.Format(client.Config().String("server.datetimeformat"))
 		}
 		fmt.Printf("%d: [%s] [%s] ", task.ID, start, task.Duration.Truncate(time.Second))
 		// a list of green/yellow/red pomodoros

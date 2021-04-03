@@ -63,12 +63,12 @@ func (s Store) CreateTask(tx *sql.Tx, task models.Task) (int, error) {
 	return taskID, nil
 }
 
-func (s Store) ReadTasks(tx *sql.Tx) ([]*models.Task, error) {
+func (s Store) ReadTasks(tx *sql.Tx) ([]models.Task, error) {
 	rows, err := tx.Query(`SELECT rowid,message,pomodoros,duration,tags FROM task`)
 	if err != nil {
 		return nil, err
 	}
-	tasks := []*models.Task{}
+	tasks := []models.Task{}
 	for rows.Next() {
 		var (
 			tags        string
@@ -88,10 +88,8 @@ func (s Store) ReadTasks(tx *sql.Tx) ([]*models.Task, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, pomodoro := range pomodoros {
-			task.Pomodoros = append(task.Pomodoros, pomodoro)
-		}
-		tasks = append(tasks, task)
+		task.Pomodoros = append(task.Pomodoros, pomodoros...)
+		tasks = append(tasks, *task)
 	}
 	return tasks, nil
 }

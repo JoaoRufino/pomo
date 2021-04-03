@@ -1,15 +1,12 @@
 package task
 
 import (
-	"database/sql"
 	"encoding/json"
 	"os"
-	"sort"
 	"time"
 
 	"github.com/joao.rufino/pomo/pkg/cli"
 	runnerC "github.com/joao.rufino/pomo/pkg/runner"
-	pomo "github.com/joao.rufino/pomo/pkg/server"
 	"github.com/joao.rufino/pomo/pkg/server/models"
 	"github.com/spf13/cobra"
 )
@@ -62,29 +59,28 @@ func NewTaskListCommand(pomoCli cli.Cli) *cobra.Command {
 }
 
 func _list(pomoCli cli.Cli, options *listOptions) {
+	pomoCli.Logger().Debug("Cli request for task list")
 	parsed, err := time.ParseDuration(options.duration)
 	maybe(err, pomoCli.Logger())
-	db, err := pomo.NewStore(pomoCli.Config().String("database.path"))
+
+	//get the list from the Server
+	list, err := pomoCli.Client().GetTaskList()
 	maybe(err, pomoCli.Logger())
-	defer db.Close()
-	maybe(db.With(func(tx *sql.Tx) error {
-		tasks, err := db.ReadTasks(tx)
-		maybe(err, pomoCli.Logger())
-		if options.sort {
-			sort.Sort(sort.Reverse(models.ByID(tasks)))
-		}
-		if !options.all {
-			tasks = models.After(time.Now().Add(-parsed), tasks)
-		}
-		if options.limit > 0 && (len(tasks) > options.limit) {
-			tasks = tasks[0:options.limit]
-		}
-		if options.asJSON {
-			maybe(json.NewEncoder(os.Stdout).Encode(tasks), pomoCli.Logger())
-			return nil
-		}
-		maybe(err, pomoCli.Logger())
-		runnerC.SummerizeTasks(pomoCli, tasks)
-		return nil
-	}), pomoCli.Logger())
+
+	//parse it accordingly
+	pomoCli.Logger().Debugf("List has %d tasks %s", len(list))
+	if options.sort {
+		//sort.Sort(sort.Reverse(list))
+	}
+	if !options.all {
+		list = models.After(time.Now().Add(-parsed), list)
+	}
+	if options.limit > 0 && (len(list) > options.limit) {
+		list = list[0:options.limit]
+	}
+	if options.asJSON {
+		maybe(json.NewEncoder(os.Stdout).Encode(&list), pomoCli.Logger())
+	} else {
+		runnerC.SummerizeTasks(pomoCli.Client(), list)
+	}
 }

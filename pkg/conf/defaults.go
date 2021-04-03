@@ -33,7 +33,7 @@ func ConfFromFile(k *koanf.Koanf, configFile string) error {
 func ConfFromDefaults(k *koanf.Koanf) error {
 	return k.Load(confmap.Provider(map[string]interface{}{
 		// Logger Defaults
-		"logger.level":              "info",
+		"logger.level":              "debug",
 		"logger.encoding":           "console",
 		"logger.color":              true,
 		"logger.dev_mode":           true,

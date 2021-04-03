@@ -10,13 +10,16 @@ import (
 func NewServerInitCommand(pomoCli *cli.PomoCli) *cobra.Command {
 	serverInitCmd := &cobra.Command{
 		Use:   "init",
-		Short: "Start API",
+		Short: "Init server",
 		Long:  `Start API`,
 		Run: func(cmd *cobra.Command, args []string) { // Initialize the databse
 			db, err := pomo.NewStore(pomoCli.Config().String("database.path"))
-			maybe(err)
+			maybe(err, pomoCli.Logger())
 			defer db.Close()
-			maybe(pomo.InitDB(db))
+			server, err := pomo.NewServer(pomoCli.Config(), nil)
+			pomoCli.SetServer(&server)
+			maybe(err, pomoCli.Logger())
+			server.Start()
 		},
 	}
 	return serverInitCmd

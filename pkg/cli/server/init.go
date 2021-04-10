@@ -2,7 +2,8 @@ package server
 
 import (
 	"github.com/joao.rufino/pomo/pkg/cli"
-	pomo "github.com/joao.rufino/pomo/pkg/server"
+	"github.com/joao.rufino/pomo/pkg/server"
+	"github.com/joao.rufino/pomo/pkg/store"
 	"github.com/spf13/cobra"
 )
 
@@ -13,10 +14,10 @@ func NewServerInitCommand(pomoCli *cli.PomoCli) *cobra.Command {
 		Short: "Init server",
 		Long:  `Start API`,
 		Run: func(cmd *cobra.Command, args []string) { // Initialize the databse
-			db, err := pomo.NewStore(pomoCli.Config().String("database.path"))
+			db, err := store.NewStore(pomoCli.Config())
 			maybe(err, pomoCli.Logger())
 			defer db.Close()
-			server, err := pomo.NewServer(pomoCli.Config(), nil)
+			server, err := server.NewServer(pomoCli.Config(), nil)
 			pomoCli.SetServer(&server)
 			maybe(err, pomoCli.Logger())
 			server.Start()

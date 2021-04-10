@@ -3,25 +3,11 @@ package runner
 import (
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/server/models"
+	"github.com/joao.rufino/pomo/pkg/core"
+	"github.com/joao.rufino/pomo/pkg/core/models"
 )
 
-type TaskRunner struct {
-	count        int
-	taskID       int
-	taskMessage  string
-	nPomodoros   int
-	origDuration time.Duration
-	state        models.State
-	client       Client
-	started      time.Time
-	pause        chan bool
-	toggle       chan bool
-	notifier     models.Notifier
-	duration     time.Duration
-}
-
-func NewTaskRunner(client Client, task *models.Task) (*TaskRunner, error) {
+func NewRunner(client core.Client, task *models.Task) (core.Runner, error) {
 	tr := &TaskRunner{
 		taskID:       task.ID,
 		taskMessage:  task.Message,
@@ -35,6 +21,21 @@ func NewTaskRunner(client Client, task *models.Task) (*TaskRunner, error) {
 		duration:     task.Duration,
 	}
 	return tr, nil
+}
+
+type TaskRunner struct {
+	count        int
+	taskID       int
+	taskMessage  string
+	nPomodoros   int
+	origDuration time.Duration
+	state        models.State
+	client       core.Client
+	started      time.Time
+	pause        chan bool
+	toggle       chan bool
+	notifier     models.Notifier
+	duration     time.Duration
 }
 
 func (t *TaskRunner) Start() {
@@ -63,11 +64,13 @@ func (t *TaskRunner) run() error {
 		timer := time.NewTimer(t.duration)
 		// Record our started time
 		t.started = pomodoro.Start
+		t.client.UpdateStatus(t.Status())
 	loop:
 		select {
 		case <-timer.C:
 			t.SetState(models.BREAKING)
 			t.count++
+			t.client.UpdateStatus(t.Status())
 		case <-t.toggle:
 			// Catch any toggles when we
 			// are not expecting them
@@ -78,6 +81,7 @@ func (t *TaskRunner) run() error {
 			remaining := t.TimeRemaining()
 			// Change state to PAUSED
 			t.SetState(models.PAUSED)
+			t.client.UpdateStatus(t.Status())
 			// Wait for the user to press [p]
 			<-t.pause
 			// Resume the timer with previous
@@ -88,6 +92,7 @@ func (t *TaskRunner) run() error {
 			t.duration = remaining
 			// Restore state to RUNNING
 			t.SetState(models.RUNNING)
+			t.client.UpdateStatus(t.Status())
 			goto loop
 		}
 		pomodoro.End = time.Now()
@@ -110,6 +115,7 @@ func (t *TaskRunner) run() error {
 	}
 	t.notifier.Notify("Pomo", "Pomo session has been completed!")
 	t.SetState(models.COMPLETE)
+	t.client.UpdateStatus(t.Status())
 	return nil
 }
 
@@ -129,8 +135,13 @@ func (t *TaskRunner) Status() *models.Status {
 		Remaining:  t.TimeRemaining(),
 	}
 }
+func (t *TaskRunner) SetStatus(status models.Status) {
+	t.state = status.State
+	t.count = status.Count
+	t.nPomodoros = status.NPomodoros
+}
 
-func NewMockedTaskRunner(task *models.Task, client Client, notifier models.Notifier) (*TaskRunner, error) {
+func NewTaskRunner(client core.Client, task *models.Task) (*TaskRunner, error) {
 	tr := &TaskRunner{
 		taskID:       task.ID,
 		taskMessage:  task.Message,
@@ -140,7 +151,7 @@ func NewMockedTaskRunner(task *models.Task, client Client, notifier models.Notif
 		state:        models.State(0),
 		pause:        make(chan bool),
 		toggle:       make(chan bool),
-		notifier:     notifier,
+		notifier:     models.NewXnotifier(client.Config().String("icon.path")),
 		duration:     task.Duration,
 	}
 	return tr, nil

@@ -7,18 +7,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/joao.rufino/pomo/pkg/core/models"
 	"github.com/joao.rufino/pomo/pkg/runner/test"
-	"github.com/joao.rufino/pomo/pkg/server"
-	"github.com/joao.rufino/pomo/pkg/server/models"
 )
 
 func TestTaskRunner(t *testing.T) {
 	baseDir, _ := ioutil.TempDir("/tmp", "")
-	store, err := server.NewStore(path.Join(baseDir, "pomo.db"))
+	store, err := store.NewStore(path.Join(baseDir, "pomo.db"))
 	if err != nil {
 		t.Error(err)
 	}
-	err = server.InitDB(store)
+	err = store.InitDB(store)
 	if err != nil {
 		t.Error(err)
 	}

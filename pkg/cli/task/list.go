@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/joao.rufino/pomo/pkg/cli"
+	"github.com/joao.rufino/pomo/pkg/core/models"
 	runnerC "github.com/joao.rufino/pomo/pkg/runner"
-	"github.com/joao.rufino/pomo/pkg/server/models"
 	"github.com/spf13/cobra"
 )
 
@@ -64,11 +64,12 @@ func _list(pomoCli cli.Cli, options *listOptions) {
 	maybe(err, pomoCli.Logger())
 
 	//get the list from the Server
-	list, err := pomoCli.Client().GetTaskList()
+	plist, err := pomoCli.Client().GetTaskList()
+	list := *plist
 	maybe(err, pomoCli.Logger())
 
 	//parse it accordingly
-	pomoCli.Logger().Debugf("List has %d tasks %s", len(list))
+	pomoCli.Logger().Debugf("List has %d tasks", len(list))
 	if options.sort {
 		//sort.Sort(sort.Reverse(list))
 	}
@@ -81,6 +82,6 @@ func _list(pomoCli cli.Cli, options *listOptions) {
 	if options.asJSON {
 		maybe(json.NewEncoder(os.Stdout).Encode(&list), pomoCli.Logger())
 	} else {
-		runnerC.SummerizeTasks(pomoCli.Client(), list)
+		runnerC.SummerizeTasks(pomoCli.Client().Config().String("server.datatimeformat"), list)
 	}
 }

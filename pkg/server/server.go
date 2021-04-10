@@ -4,23 +4,20 @@ import (
 	"errors"
 	"os"
 
-	"github.com/joao.rufino/pomo/pkg/server/models"
+	"github.com/joao.rufino/pomo/pkg/core"
+	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joao.rufino/pomo/pkg/server/unix"
 	"github.com/knadh/koanf"
 	"go.uber.org/zap"
 )
 
-type Server interface {
-	Start()
-	Stop()
-}
-
-func NewServer(k *koanf.Koanf, runner models.Runner) (Server, error) {
+func NewServer(k *koanf.Koanf, runner models.Runner) (core.Server, error) {
 	//check if socket file exists
 
 	switch k.String("server.type") {
 	case "unix":
-		unix := &UnixServer{}
-		return unix.Init(k.String("server.socket"), runner)
+		unix := &unix.UnixServer{}
+		return unix.Init(k, runner)
 	}
 	return nil, errors.New("unrecognized server type")
 

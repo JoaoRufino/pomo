@@ -6,7 +6,7 @@ import (
 
 	termui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
-	"github.com/joao.rufino/pomo/pkg/server/models"
+	"github.com/joao.rufino/pomo/pkg/core/models"
 )
 
 func render(wheel *models.Wheel, status *models.Status) *widgets.Paragraph {
@@ -91,7 +91,7 @@ func centered(part *widgets.Paragraph) *termui.Grid {
 	return grid
 }
 
-func StartUI(runner *TaskRunner) {
+func (runner *TaskRunner) StartUI() {
 	err := termui.Init()
 	if err != nil {
 		panic(err)

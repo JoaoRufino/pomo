@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/joao.rufino/pomo/pkg/core/models"
@@ -42,7 +43,7 @@ func (s *RestServer) TaskSave() http.HandlerFunc {
 			return
 		}
 
-		err := s.store.TaskSave(ctx, task)
+		_, err := s.store.TaskSave(ctx, &task)
 		if err != nil {
 			if serr, ok := err.(*models.Error); ok {
 				RenderErrInvalidRequest(w, serr.ErrorForOp(models.ErrorOpSave))
@@ -87,8 +88,8 @@ func (s *RestServer) TaskGetByID() http.HandlerFunc {
 		ctx := r.Context()
 
 		id := chi.URLParam(r, "id")
-
-		task, err := s.store.TaskGetByID(ctx, id)
+		taskID, _ := strconv.Atoi(id)
+		task, err := s.store.TaskGetByID(ctx, taskID)
 		if err != nil {
 			if err == models.ErrNotFound {
 				RenderErrResourceNotFound(w, "task")
@@ -133,7 +134,8 @@ func (s *RestServer) TaskDeleteByID() http.HandlerFunc {
 
 		id := chi.URLParam(r, "id")
 
-		err := s.store.TaskDeleteByID(ctx, id)
+		taskID, _ := strconv.Atoi(id)
+		err := s.store.TaskDeleteByID(ctx, taskID)
 		if err != nil {
 			if err == models.ErrNotFound {
 				RenderErrResourceNotFound(w, "task")
@@ -194,7 +196,7 @@ func (s *RestServer) TasksFind() http.HandlerFunc {
 
 		ctx := r.Context()
 
-		tasks, count, err := s.store.TasksFind(ctx, qp)
+		tasks, err := s.store.GetAllTasks(ctx)
 		if err != nil {
 			if serr, ok := err.(*models.Error); ok {
 				RenderErrInvalidRequest(w, serr.ErrorForOp(models.ErrorOpFind))
@@ -205,7 +207,7 @@ func (s *RestServer) TasksFind() http.HandlerFunc {
 			return
 		}
 
-		RenderJSON(w, http.StatusOK, models.Results{Count: count, Results: tasks})
+		RenderJSON(w, http.StatusOK, models.Results{Count: int64(len(tasks)), Results: tasks})
 
 	}
 

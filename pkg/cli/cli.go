@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"github.com/joao.rufino/pomo/pkg/client"
 	"github.com/joao.rufino/pomo/pkg/conf"
 	"github.com/joao.rufino/pomo/pkg/core"
 	"github.com/knadh/koanf"
@@ -43,7 +42,7 @@ func NewPomoCli() (*PomoCli, error) {
 	}
 	conf.InitLogger(pomoCli.Config())
 	pomoCli.logger = zap.S().With("package", "cli")
-	pomoCli.client, err = client.NewClient(pomoCli.Config())
+	//pomoCli.client, err = client.NewClient(pomoCli.Config())
 	if err != nil {
 		return nil, err
 	}

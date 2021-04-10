@@ -46,7 +46,7 @@ func ConfFromDefaults(k *koanf.Koanf) error {
 		// Server Configuration
 		"server.name":           "pomo",
 		"server.version":        "debug",
-		"server.type":           "unix",
+		"server.type":           "rest",
 		"server.host":           "",
 		"server.port":           "8080",
 		"server.socket":         defaultConfigPath() + "/pomo.sock",

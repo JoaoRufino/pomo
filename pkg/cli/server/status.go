@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewServerStatusCommand(pomoCli *cli.PomoCli) *cobra.Command {
+func NewServerStatusCommand(pomoCli cli.Cli) *cobra.Command {
 	serverInitCmd := &cobra.Command{
 		Use:   "status",
 		Short: "Check server status",

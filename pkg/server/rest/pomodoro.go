@@ -11,7 +11,7 @@ import (
 // PomodoroSave saves a pomodoro
 func (s *RestServer) PomodoroSave() http.HandlerFunc {
 
-	// swagger:operation POST /api/pomodoros PomodoroSave
+	// swagger:operation POST /api/pomodoros/{id} PomodoroSave
 	//
 	// Create/Save Pomodoro
 	//
@@ -19,8 +19,6 @@ func (s *RestServer) PomodoroSave() http.HandlerFunc {
 	// Pass an existing ID to update.
 	//
 	// ---
-	// tags:
-	// - WIDGETS
 	// parameters:
 	// - name: pomodoro
 	//   in: body
@@ -31,13 +29,18 @@ func (s *RestServer) PomodoroSave() http.HandlerFunc {
 	//     "$ref": "#/definitions/models_PomodoroExample"
 	// responses:
 	//   '200':
-	//     description: User Object
+	//     description: Pomodoro Object
 	//     type: object
 	//     schema:
 	//       "$ref": "#/definitions/models_Pomodoro"
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx := r.Context()
+		id := chi.URLParam(r, "id")
+		taskID, err := strconv.Atoi(id)
+		if err != nil {
+			RenderErrInvalidRequest(w, err)
+		}
 
 		var pomodoro = new(models.Pomodoro)
 		if err := DecodeJSON(r.Body, pomodoro); err != nil {
@@ -45,7 +48,7 @@ func (s *RestServer) PomodoroSave() http.HandlerFunc {
 			return
 		}
 
-		err := s.store.PomodoroSave(ctx, 1, pomodoro)
+		err = s.store.PomodoroSave(ctx, taskID, pomodoro)
 		if err != nil {
 			if serr, ok := err.(*models.Error); ok {
 				RenderErrInvalidRequest(w, serr.ErrorForOp(models.ErrorOpSave))
@@ -119,8 +122,6 @@ func (s *RestServer) PomodoroDeleteByID() http.HandlerFunc {
 	// Deletes a Pomodoro
 	//
 	// ---
-	// tags:
-	// - WIDGETS
 	// parameters:
 	// - name: id
 	//   in: path
@@ -152,4 +153,62 @@ func (s *RestServer) PomodoroDeleteByID() http.HandlerFunc {
 
 		RenderNoContent(w)
 	}
+}
+
+// GetStatus returns the server status
+func (s *RestServer) StatusGet() http.HandlerFunc {
+	// swagger:operation GET /api/status GetStatus
+	//
+	// Get the server status
+	//
+	// Fetches the server status
+	//
+	// ---
+	// responses:
+	//   '200':
+	//     description: Status Object
+	//     type: object
+	//     schema:
+	//       "$ref": "#/definitions/models_Status"
+	return func(w http.ResponseWriter, r *http.Request) {
+		RenderJSON(w, http.StatusOK, s.status)
+	}
+}
+
+// StatusSave saves the server status
+func (s *RestServer) StatusSave() http.HandlerFunc {
+
+	// swagger:operation POST /api/status StatusSave
+	//
+	// Save Status
+	//
+	// Saves the current server status
+	//
+	// ---
+	// parameters:
+	// - name: status
+	//   in: body
+	//   description: Status to Save/Update
+	//   required: true
+	//   type: object
+	//   schema:
+	//     "$ref": "#/definitions/models_Status"
+	// responses:
+	//   '200':
+	//     description: Status Object
+	//     type: object
+	//     schema:
+	//       "$ref": "#/definitions/models_Status"
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		var status = new(models.Status)
+		if err := DecodeJSON(r.Body, status); err != nil {
+			RenderErrInvalidRequest(w, err)
+			return
+		}
+		s.status = *status
+
+		RenderJSON(w, http.StatusOK, s.status)
+	}
+
 }

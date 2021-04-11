@@ -9,7 +9,7 @@ import (
 // Store is the persistent store of tasks
 type Store interface {
 	TaskGetByID(ctx context.Context, id int) (*models.Task, error)
-	GetAllTasks(ctx context.Context) ([]models.Task, error)
+	GetAllTasks(ctx context.Context) (models.List, error)
 	TaskSave(ctx context.Context, task *models.Task) (int, error)
 	TaskDeleteByID(ctx context.Context, id int) error
 

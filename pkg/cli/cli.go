@@ -17,6 +17,7 @@ type Cli interface {
 	Server() *core.Server
 	Client() core.Client
 	SetServer(*core.Server)
+	SetClient(*core.Client)
 }
 
 // PomoCli is an instance the docker command line client.
@@ -42,7 +43,6 @@ func NewPomoCli() (*PomoCli, error) {
 	}
 	conf.InitLogger(pomoCli.Config())
 	pomoCli.logger = zap.S().With("package", "cli")
-	//pomoCli.client, err = client.NewClient(pomoCli.Config())
 	if err != nil {
 		return nil, err
 	}
@@ -75,4 +75,8 @@ func (pomoCli *PomoCli) Client() core.Client {
 }
 func (pomoCli *PomoCli) SetServer(server *core.Server) {
 	pomoCli.server = server
+}
+
+func (pomoCli *PomoCli) SetClient(client *core.Client) {
+	pomoCli.client = *client
 }

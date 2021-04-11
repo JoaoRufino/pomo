@@ -47,10 +47,11 @@ func ConfFromDefaults(k *koanf.Koanf) error {
 		"server.name":           "pomo",
 		"server.version":        "debug",
 		"server.type":           "rest",
-		"server.host":           "",
-		"server.port":           "8080",
-		"server.socket":         defaultConfigPath() + "/pomo.sock",
+		"server.rest.host":      "",
+		"server.rest.port":      "8080",
+		"server.unix.socket":    defaultConfigPath() + "/pomo.sock",
 		"server.datetimeformat": "2006-01-02 15:04",
+		"server.log_requests":   true,
 
 		// Database Settings
 		"database.username":              "postgres",
@@ -62,14 +63,10 @@ func ConfFromDefaults(k *koanf.Koanf) error {
 		"database.auto_create":           true,
 		"database.search_path":           "",
 		"database.sslmode":               "disable",
-		"database.sslcert":               "",
-		"database.sslkey":                "",
-		"database.sslrootcert":           "",
 		"database.retries":               5,
 		"database.sleep_between_retries": "7s",
 		"database.max_connections":       40,
-		"database.log_queries":           false,
-		"database.wipe_confirm":          false,
+		"database.log_queries":           true,
 		"database.path":                  defaultConfigPath() + "/pomo.db",
 	}, "."), nil)
 }

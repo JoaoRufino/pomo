@@ -8,7 +8,7 @@ import (
 )
 
 // NewConfigCommand returns a cobra command for `config` subcommands
-func NewServerVersionCommand(pomoCli *cli.PomoCli) *cobra.Command {
+func NewServerVersionCommand(pomoCli cli.Cli) *cobra.Command {
 	serverVersionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Show version",

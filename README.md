@@ -2,7 +2,7 @@
 
 Kudos to [kevinschoon](https://github.com/kevinschoon). This is an adaptation of his code. The core logic remains the same.
 
-I am using this fork as a demo of my coding skills to apply for the job of Software Development at Artidis.
+I am using this fork as a demo of my coding skills to apply for the job of Software Development.
 
 I believe that the best way to show my coding skills is to pick a project that I can refactor to show some good practices and quality software.
 

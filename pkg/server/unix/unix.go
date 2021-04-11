@@ -30,6 +30,8 @@ type UnixServer struct {
 	status   models.Status
 }
 
+// listens for client requests following models.Protocol
+// cid drives the response
 func (s UnixServer) listen() {
 	s.logger.Info("Listening")
 	for s.running {
@@ -39,25 +41,28 @@ func (s UnixServer) listen() {
 		defer conn.Close()
 		n, _ := conn.Read(buf)
 
+		//data was received
 		if n != 0 {
 			s.logger.Debugf("Incoming request")
 			message := models.Protocol{}
 			err := json.Unmarshal(buf[0:n], &message)
 			maybe(err, s.logger)
 			s.logger.Debug(string(buf[0:n]))
-			switch message.Cid {
 
+			switch message.Cid {
+			//get server status
 			case models.Cmd_GetServerStatus:
 				s.logger.Debug("Incoming status request")
 				_ = s.sendResponse(message.Cid, s.status, conn)
 
+			//get all tasks
 			case models.Cmd_GetList:
 				s.logger.Debug("Incoming task list request")
-				tasks := models.List{}
-				tasks, err = s.store.GetAllTasks(nil)
+				tasks, err := s.store.GetAllTasks(nil)
 				maybe(err, s.logger)
 				_ = s.sendResponse(message.Cid, tasks, conn)
 
+			//create a task return
 			case models.Cmd_CreateTask:
 				s.logger.Debug("Incoming create task request")
 				var taskId int
@@ -71,6 +76,7 @@ func (s UnixServer) listen() {
 				maybe(err, s.logger)
 				_ = s.sendResponse(message.Cid, taskId, conn)
 
+			//delete a task by id
 			case models.Cmd_DeleteTask:
 				s.logger.Debug("Incoming delete task request")
 				payload := models.Protocol{Payload: 0}
@@ -84,6 +90,7 @@ func (s UnixServer) listen() {
 				maybe(err, s.logger)
 				_ = s.sendResponse(message.Cid, "", conn)
 
+			//get a task by ID
 			case models.Cmd_GetTask:
 				s.logger.Debug("Incoming get task request")
 				payload := models.Protocol{Payload: 0}
@@ -101,6 +108,7 @@ func (s UnixServer) listen() {
 				task.Pomodoros = []*models.Pomodoro{}
 				_ = s.sendResponse(message.Cid, task, conn)
 
+			//get a pomodoro by taskID
 			case models.Cmd_CreatePomodoro:
 				s.logger.Debug("Incoming create pomodoro request")
 				payload := models.Protocol{Payload: &models.PomodoroWithID{}}
@@ -113,7 +121,8 @@ func (s UnixServer) listen() {
 				maybe(err, s.logger)
 				_ = s.sendResponse(message.Cid, err.Error(), conn)
 
-			case models.Cmd_UpdateTask:
+			//update server status
+			case models.Cmd_UpdateStatus:
 				s.logger.Debug("Incoming update status request")
 				payload := models.Protocol{Payload: &models.Status{}}
 				json.Unmarshal(buf[0:n], &payload)
@@ -138,19 +147,22 @@ func (s UnixServer) sendResponse(cid models.CmdID, payload interface{}, conn net
 	return nil
 }
 
+//Starts the server
 func (s UnixServer) Start() {
 	s.running = true
 	s.listen()
 }
 
+//Stops the server
 func (s UnixServer) Stop() {
 	s.running = false
 	s.listener.Close()
 	s.store.Close()
 }
 
+//Initializes the server structure
 func (s UnixServer) Init(k *koanf.Koanf, runner models.Runner) (*UnixServer, error) {
-	socketPath := k.String("server.socket")
+	socketPath := k.String("server.unix.socket")
 	if _, err := os.Stat(socketPath); err == nil {
 		_, err := net.Dial("unix", socketPath)
 		//if error then sock file was saved after crash
@@ -164,6 +176,7 @@ func (s UnixServer) Init(k *koanf.Koanf, runner models.Runner) (*UnixServer, err
 	store, err := serverStore.NewStore(k)
 	maybe(err, s.logger)
 
+	//open the socket
 	listener, err := net.Listen("unix", socketPath)
 	if err != nil {
 		return nil, err

@@ -16,7 +16,6 @@ func (s *RestServer) TaskSave() http.HandlerFunc {
 	// Create/Save Task
 	//
 	// Creates or saves a task. Omit the ID to auto generate.
-	// Pass an existing ID to update.
 	//
 	// ---
 	// parameters:
@@ -37,13 +36,13 @@ func (s *RestServer) TaskSave() http.HandlerFunc {
 
 		ctx := r.Context()
 
-		var task = models.Task{}
+		var task = &models.Task{}
 		if err := DecodeJSON(r.Body, task); err != nil {
 			RenderErrInvalidRequest(w, err)
 			return
 		}
 
-		_, err := s.store.TaskSave(ctx, &task)
+		taskID, err := s.store.TaskSave(ctx, task)
 		if err != nil {
 			if serr, ok := err.(*models.Error); ok {
 				RenderErrInvalidRequest(w, serr.ErrorForOp(models.ErrorOpSave))
@@ -53,6 +52,7 @@ func (s *RestServer) TaskSave() http.HandlerFunc {
 			}
 			return
 		}
+		task.ID = taskID
 
 		RenderJSON(w, http.StatusOK, task)
 	}
@@ -61,7 +61,6 @@ func (s *RestServer) TaskSave() http.HandlerFunc {
 
 // TaskGetByID returns the task
 func (s *RestServer) TaskGetByID() http.HandlerFunc {
-
 	// swagger:operation GET /api/tasks/{id} TaskGetByID
 	//
 	// Get a Task
@@ -69,8 +68,6 @@ func (s *RestServer) TaskGetByID() http.HandlerFunc {
 	// Fetches a Task
 	//
 	// ---
-	// tags:
-	// - THINGS
 	// parameters:
 	// - name: id
 	//   in: path
@@ -109,7 +106,6 @@ func (s *RestServer) TaskGetByID() http.HandlerFunc {
 
 // TaskDeleteByID deletes a task
 func (s *RestServer) TaskDeleteByID() http.HandlerFunc {
-
 	// swagger:operation DELETE /api/tasks/{id} TaskDeleteByID
 	//
 	// Delete a Task
@@ -117,8 +113,6 @@ func (s *RestServer) TaskDeleteByID() http.HandlerFunc {
 	// Deletes a Task
 	//
 	// ---
-	// tags:
-	// - THINGS
 	// parameters:
 	// - name: id
 	//   in: path
@@ -156,7 +150,6 @@ func (s *RestServer) TaskDeleteByID() http.HandlerFunc {
 
 // TasksFind finds tasks
 func (s *RestServer) TasksFind() http.HandlerFunc {
-
 	// swagger:operation GET /api/tasks TasksFind
 	//
 	// Find Tasks

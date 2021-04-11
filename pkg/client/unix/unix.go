@@ -182,7 +182,7 @@ func (c UnixClient) StartTask(taskID int) error {
 
 // UpdateStatus sends a status update to the server
 func (c UnixClient) UpdateStatus(status *models.Status) error {
-	cid := models.Cmd_UpdateTask
+	cid := models.Cmd_UpdateStatus
 	message := c.makeRequest(cid, status)
 	response := models.Protocol{Payload: ""}
 	json.Unmarshal(message, &response)
@@ -205,8 +205,8 @@ func (c UnixClient) Close() error {
 	return nil
 }
 
-func (c UnixClient) Start(k *koanf.Koanf) (*UnixClient, error) {
-	c.path = k.String("server.socket")
+func (c UnixClient) Init(k *koanf.Koanf) (*UnixClient, error) {
+	c.path = k.String("server.unix.socket")
 	c.config = k
 	c.logger = zap.S().With("package", "client")
 	return &c, nil

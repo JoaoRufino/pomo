@@ -17,7 +17,7 @@ import (
 ///
 
 // NewServerCommand returns a cobra command for `server` subcommands
-func NewServerCommand(pomoCli *cli.PomoCli) *cobra.Command {
+func NewServerCommand(pomoCli cli.Cli) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:   "server",
 		Short: "operations regarding the server",

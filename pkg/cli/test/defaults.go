@@ -10,7 +10,7 @@ import (
 func ConfFromDefaults(k *koanf.Koanf) error {
 	return k.Load(confmap.Provider(map[string]interface{}{
 		// Logger Defaults
-		"logger.level":              "info",
+		"logger.level":              "debug",
 		"logger.encoding":           "console",
 		"logger.color":              true,
 		"logger.dev_mode":           true,
@@ -23,24 +23,27 @@ func ConfFromDefaults(k *koanf.Koanf) error {
 		// Server Configuration
 		"server.name":           "pomo",
 		"server.version":        "debug",
-		"server.host":           "",
-		"server.port":           "8080",
-		"server.socket":         "../../../tmp/test/pomo.sock",
+		"server.type":           "rest",
+		"server.rest.host":      "",
+		"server.rest.port":      "8080",
+		"server.unix.socket":    defaultConfigPath() + "/pomo.sock",
 		"server.datetimeformat": "2006-01-02 15:04",
+		"server.log_requests":   true,
 
 		// Database Settings
 		"database.username":              "postgres",
 		"database.password":              "password",
 		"database.host":                  "postgres",
 		"database.port":                  5432,
-		"database.type":                  "sqlite",
 		"database.database":              "pomo",
+		"database.type":                  "sqlite",
 		"database.auto_create":           true,
+		"database.search_path":           "",
+		"database.sslmode":               "disable",
 		"database.retries":               5,
 		"database.sleep_between_retries": "7s",
 		"database.max_connections":       40,
-		"database.log_queries":           false,
-		"database.wipe_confirm":          false,
-		"database.path":                  "../../../tmp/test/pomo.db",
+		"database.log_queries":           true,
+		"database.path":                  defaultConfigPath() + "/pomo.db",
 	}, "."), nil)
 }

@@ -16,5 +16,5 @@ const (
 	Cmd_GetList
 	Cmd_GetServerStatus
 	Cmd_GetTask
-	Cmd_UpdateTask
+	Cmd_UpdateStatus
 )

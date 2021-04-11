@@ -4,8 +4,14 @@ import (
 	"os"
 
 	"github.com/joao.rufino/pomo/pkg/cli"
+	"github.com/joao.rufino/pomo/pkg/client"
+	"github.com/joao.rufino/pomo/pkg/core"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+)
+
+var (
+	c core.Client
 )
 
 // task command
@@ -23,6 +29,14 @@ func NewTaskCommand(pomoCli cli.Cli) *cobra.Command {
 		Use:   "task",
 		Short: "operations regarding the tasks",
 		Long:  "operations affecting the tasks",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			c, err := client.NewClient(pomoCli.Config())
+			maybe(err, pomoCli.Logger())
+			pomoCli.SetClient(&c)
+		},
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			pomoCli.Client().Close()
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},

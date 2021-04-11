@@ -62,6 +62,8 @@ func (t *TaskRunner) run() error {
 		t.SetState(models.RUNNING)
 		// Create a new timer
 		timer := time.NewTimer(t.duration)
+		// new ticker for periodic status updates
+		ticker := time.NewTicker(5 * time.Second)
 		// Record our started time
 		t.started = pomodoro.Start
 		t.client.UpdateStatus(t.Status())
@@ -92,6 +94,9 @@ func (t *TaskRunner) run() error {
 			t.duration = remaining
 			// Restore state to RUNNING
 			t.SetState(models.RUNNING)
+			t.client.UpdateStatus(t.Status())
+			goto loop
+		case <-ticker.C:
 			t.client.UpdateStatus(t.Status())
 			goto loop
 		}

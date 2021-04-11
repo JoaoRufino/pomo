@@ -72,7 +72,7 @@ func (s SqliteStore) TaskSave(context context.Context, task *models.Task) (int, 
 	return taskID, err
 }
 
-func (s SqliteStore) GetAllTasks(context context.Context) ([]models.Task, error) {
+func (s SqliteStore) GetAllTasks(context context.Context) (models.List, error) {
 	tasks := []models.Task{}
 
 	err := s.With(func(tx *sql.Tx) error {

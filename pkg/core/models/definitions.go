@@ -70,6 +70,10 @@ type Task struct {
 	Duration time.Duration `json:"duration"`
 }
 
+type ListResults struct {
+	Count   int64 `json:"count"`
+	Results List  `json:"results"`
+}
 type List []Task
 
 // ByID is a sortable array of tasks

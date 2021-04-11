@@ -6,7 +6,7 @@ import (
 )
 
 // NewConfigCommand returns a cobra command for `config` subcommands
-func NewServerConfigCommand(pomoCli *cli.PomoCli) *cobra.Command {
+func NewServerConfigCommand(pomoCli cli.Cli) *cobra.Command {
 	serverConfigCmd := &cobra.Command{
 		Use:   "config",
 		Short: "Display the current server configuration",

@@ -14,14 +14,14 @@ func NewTaskStatusCommand(pomoCli cli.Cli) *cobra.Command {
 		Short: "task status",
 		Long:  `request the tasks status`,
 		Run: func(cmd *cobra.Command, args []string) {
-			_status(pomoCli)
+			status(pomoCli)
 		},
 	}
 
 	return taskStatusCmd
 }
 
-func _status(pomoCli cli.Cli) {
+func status(pomoCli cli.Cli) {
 	status, err := pomoCli.Client().GetServerStatus()
 	maybe(err, pomoCli.Logger())
 	runnerC.OutputStatus(*status)

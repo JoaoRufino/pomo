@@ -19,7 +19,7 @@ func NewTaskStartCommand(pomoCli cli.Cli) *cobra.Command {
 		Short: "start task",
 		Long:  `start a task`,
 		Run: func(cmd *cobra.Command, args []string) {
-			_start(pomoCli, &options)
+			start(pomoCli, &options)
 		},
 	}
 
@@ -31,6 +31,6 @@ func NewTaskStartCommand(pomoCli cli.Cli) *cobra.Command {
 	return taskStartCmd
 }
 
-func _start(pomoCli cli.Cli, options *startOptions) {
+func start(pomoCli cli.Cli, options *startOptions) {
 	pomoCli.Client().StartTask(options.taskID)
 }

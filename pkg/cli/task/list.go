@@ -43,7 +43,7 @@ func NewTaskListCommand(pomoCli cli.Cli) *cobra.Command {
 		Short: "List tasks",
 		Long:  `List all tasks`,
 		Run: func(cmd *cobra.Command, args []string) {
-			_list(pomoCli, &options)
+			list(pomoCli, &options)
 		},
 	}
 
@@ -52,13 +52,13 @@ func NewTaskListCommand(pomoCli cli.Cli) *cobra.Command {
 	flags.BoolVarP(&options.asJSON, "json", "j", false, "output task history as JSON")
 	flags.BoolVarP(&options.sort, "sort", "s", false, "sort tasks assending in age")
 	flags.BoolVarP(&options.all, "all", "a", true, "output all tasks")
-	flags.IntVarP(&options.limit, "limit", "n", 0, "limit the number of results by n")
+	flags.IntVarP(&options.limit, "limit", "n", 0, "limit the number of resultsby n")
 	flags.StringVarP(&options.duration, "duration", "d", "24h", "show tasks within this duration")
 
 	return taskListCmd
 }
 
-func _list(pomoCli cli.Cli, options *listOptions) {
+func list(pomoCli cli.Cli, options *listOptions) {
 	pomoCli.Logger().Debug("Cli request for task list")
 	parsed, err := time.ParseDuration(options.duration)
 	maybe(err, pomoCli.Logger())
@@ -82,6 +82,6 @@ func _list(pomoCli cli.Cli, options *listOptions) {
 	if options.asJSON {
 		maybe(json.NewEncoder(os.Stdout).Encode(&list), pomoCli.Logger())
 	} else {
-		runnerC.SummerizeTasks(pomoCli.Client().Config().String("server.datatimeformat"), list)
+		runnerC.SummarizeTasks(pomoCli.Client().Config().String("server.datatimeformat"), list)
 	}
 }

@@ -19,7 +19,7 @@ func NewTaskDeleteCommand(pomoCli cli.Cli) *cobra.Command {
 		Short: "delete task",
 		Long:  `delete task using id`,
 		Run: func(cmd *cobra.Command, args []string) {
-			_delete(pomoCli, options)
+			delete(pomoCli, options)
 		},
 	}
 
@@ -31,7 +31,7 @@ func NewTaskDeleteCommand(pomoCli cli.Cli) *cobra.Command {
 	return taskDeleteCmd
 }
 
-func _delete(pomoCli cli.Cli, options *deleteOptions) {
+func delete(pomoCli cli.Cli, options *deleteOptions) {
 	err := pomoCli.Client().DeleteTaskByID(options.taskID)
 	maybe(err, pomoCli.Logger())
 }

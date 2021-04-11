@@ -3,6 +3,7 @@ package unix
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 
@@ -54,12 +55,10 @@ func (c UnixClient) CreateTask(task *models.Task) (int, error) {
 	response := models.Protocol{Payload: 0}
 	json.Unmarshal(message, &response)
 	if response.Cid != cid {
-		return -1, errors.New("receive wrong message type")
+		return -1, fmt.Errorf(models.ErrWrongMessageType, response.Cid, cid)
 	} else {
 		taskID, ok := response.Payload.(float64) //float64, for JSON numbers
-		if !ok {
-			c.logger.Fatalf("got data of type %T but wanted %T", response.Payload, message)
-		}
+		valid(ok, c.logger, response.Payload, message)
 		return int(taskID), nil
 	}
 
@@ -75,12 +74,10 @@ func (c UnixClient) CreatePomodoro(taskID int, pomodoro models.Pomodoro) error {
 	response := models.Protocol{Payload: ""}
 	json.Unmarshal(message, &response)
 	if response.Cid != cid {
-		return errors.New("receive wrong message type")
+		return fmt.Errorf(models.ErrWrongMessageType, response.Cid, cid)
 	} else {
 		message, ok := response.Payload.(string)
-		if !ok {
-			c.logger.Fatalf("got data of type %T but wanted %T", response.Payload, message)
-		}
+		valid(ok, c.logger, response.Payload, message)
 		if len(message) != 0 {
 			return errors.New(message)
 		} else {
@@ -99,12 +96,10 @@ func (c UnixClient) DeleteTaskByID(taskID int) error {
 	response := models.Protocol{Payload: ""}
 	json.Unmarshal(message, &response)
 	if response.Cid != cid {
-		return errors.New("receive wrong message type")
+		return fmt.Errorf(models.ErrWrongMessageType, response.Cid, cid)
 	} else {
 		message, ok := response.Payload.(string)
-		if !ok {
-			c.logger.Fatalf("got data of type %T but wanted %T", response.Payload, message)
-		}
+		valid(ok, c.logger, response.Payload, message)
 		if len(message) != 0 {
 			return errors.New(message)
 		} else {
@@ -122,12 +117,10 @@ func (c UnixClient) GetServerStatus() (*models.Status, error) {
 	response := models.Protocol{Payload: &models.Status{}}
 	json.Unmarshal(message, &response)
 	if response.Cid != cid {
-		return nil, errors.New("received wrong message type")
+		return nil, fmt.Errorf(models.ErrWrongMessageType, response.Cid, cid)
 	} else {
 		status, ok := response.Payload.(*models.Status)
-		if !ok {
-			c.logger.Fatalf("got data of type %T but wanted %T", response.Payload, message)
-		}
+		valid(ok, c.logger, response.Payload, message)
 		return status, nil
 	}
 }
@@ -141,12 +134,10 @@ func (c UnixClient) GetTaskList() (*models.List, error) {
 	response := models.Protocol{Payload: &models.List{}}
 	json.Unmarshal(message, &response)
 	if response.Cid != cid {
-		return nil, errors.New("received wrong message type")
+		return nil, fmt.Errorf(models.ErrWrongMessageType, response.Cid, cid)
 	} else {
 		list, ok := response.Payload.(*models.List)
-		if !ok {
-			c.logger.Fatalf("got data of type %T but wanted %T", response.Payload, message)
-		}
+		valid(ok, c.logger, response.Payload, message)
 		return list, nil
 	}
 }
@@ -159,12 +150,10 @@ func (c UnixClient) GetTask(taskID int) (*models.Task, error) {
 	response := models.Protocol{Payload: &models.Task{}}
 	json.Unmarshal(message, &response)
 	if response.Cid != cid {
-		return &models.Task{}, errors.New("received wrong message type")
+		return nil, fmt.Errorf(models.ErrWrongMessageType, response.Cid, cid)
 	} else {
 		task, ok := response.Payload.(*models.Task)
-		if !ok {
-			c.logger.Fatalf("got data of type %T but wanted %T", response.Payload, message)
-		}
+		valid(ok, c.logger, response.Payload, message)
 		return task, nil
 	}
 }
@@ -173,7 +162,7 @@ func (c UnixClient) GetTask(taskID int) (*models.Task, error) {
 func (c UnixClient) StartTask(taskID int) error {
 	task, err := c.GetTask(taskID)
 	maybe(err, c.logger)
-	r, err := runner.NewTaskRunner(c, task)
+	r, err := runner.NewRunner(c, task)
 	maybe(err, c.logger)
 	r.Start()
 	r.StartUI()
@@ -187,12 +176,10 @@ func (c UnixClient) UpdateStatus(status *models.Status) error {
 	response := models.Protocol{Payload: ""}
 	json.Unmarshal(message, &response)
 	if response.Cid != cid {
-		return errors.New("received wrong message type")
+		return fmt.Errorf(models.ErrWrongMessageType, response.Cid, cid)
 	} else {
 		message, ok := response.Payload.(string)
-		if !ok {
-			c.logger.Fatalf("got data of type %T but wanted %T", response.Payload, message)
-		}
+		valid(ok, c.logger, response.Payload, message)
 		if len(message) != 0 {
 			return errors.New(message)
 		} else {
@@ -220,5 +207,11 @@ func maybe(err error, logger *zap.SugaredLogger) {
 	if err != nil {
 		logger.Fatalf("Error:\n%s\n", err)
 		os.Exit(1)
+	}
+}
+
+func valid(ok bool, logger *zap.SugaredLogger, expected interface{}, received interface{}) {
+	if !ok {
+		logger.Fatalf(models.ErrWrongDataType, expected, received)
 	}
 }

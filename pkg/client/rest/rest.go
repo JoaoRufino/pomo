@@ -24,13 +24,17 @@ type RestClient struct {
 	HTTPClient *http.Client
 }
 
-// makeRequest sends a message to the server
-//using the protocol structure
-func (c RestClient) makeRequest(req *http.Request, payload interface{}) error {
+//add requestHeaders
+func addHeaders(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", "ola"))
+}
 
+// makeRequest sends a message to the server
+//using the protocol structure
+func (c RestClient) makeRequest(req *http.Request, payload interface{}) error {
+	addHeaders(req)
 	res, err := c.HTTPClient.Do(req)
 	maybe(err, c.logger)
 
@@ -60,8 +64,6 @@ func (c RestClient) CreateTask(task *models.Task) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	response := &models.Task{}
 	err = c.makeRequest(req, response)
 	maybe(err, c.logger)
@@ -82,7 +84,6 @@ func (c RestClient) CreatePomodoro(taskID int, pomodoro models.Pomodoro) error {
 		return err
 	}
 
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	err = c.makeRequest(req, nil)
 	return err
 }
@@ -95,7 +96,6 @@ func (c RestClient) DeleteTaskByID(taskID int) error {
 		return err
 	}
 
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	err = c.makeRequest(req, nil)
 	return err
 }
@@ -124,7 +124,6 @@ func (c RestClient) GetTaskList() (*models.List, error) {
 		return nil, err
 	}
 
-	req.Header.Add("Accept", "application/json")
 	response := &models.ListResults{}
 	err = c.makeRequest(req, response)
 	maybe(err, c.logger)
@@ -140,7 +139,6 @@ func (c RestClient) GetTask(taskID int) (*models.Task, error) {
 		return nil, err
 	}
 
-	req.Header.Add("Accept", "application/json")
 	response := &models.Task{}
 	err = c.makeRequest(req, response)
 	maybe(err, c.logger)
@@ -151,7 +149,7 @@ func (c RestClient) GetTask(taskID int) (*models.Task, error) {
 func (c RestClient) StartTask(taskID int) error {
 	task, err := c.GetTask(taskID)
 	maybe(err, c.logger)
-	r, err := runner.NewTaskRunner(c, task)
+	r, err := runner.NewRunner(c, task)
 	maybe(err, c.logger)
 	r.Start()
 	r.StartUI()
@@ -170,7 +168,6 @@ func (c RestClient) UpdateStatus(status *models.Status) error {
 		return err
 	}
 
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	err = c.makeRequest(req, nil)
 	return err
 }

@@ -24,21 +24,29 @@ type RestServer struct {
 	status models.Status
 }
 
+const (
+	TASK_PATH        = "/tasks"
+	TASK_ID_PATH     = TASK_PATH + "/{id}"
+	POMODORO_PATH    = "/pomodoros"
+	POMODORO_ID_PATH = POMODORO_PATH + "/{id}"
+	STATUS_PATH      = "/status"
+)
+
 // Setup will setup the API listener
 func (s *RestServer) Setup() error {
 
 	// Base Functions
-	s.router.Post("/tasks", s.TaskSave())
-	s.router.Get("/tasks/{id}", s.TaskGetByID())
-	s.router.Delete("/tasks/{id}", s.TaskDeleteByID())
-	s.router.Get("/tasks", s.TasksFind())
+	s.router.Get(TASK_PATH, s.TasksFind())
+	s.router.Post(TASK_PATH, s.TaskSave())
+	s.router.Get(TASK_ID_PATH, s.TaskGetByID())
+	s.router.Delete(TASK_ID_PATH, s.TaskDeleteByID())
 
-	s.router.Post("/pomodoros/{id}", s.PomodoroSave())
-	s.router.Get("/pomodoros/{id}", s.PomodoroGetByID())
-	s.router.Delete("/pomodoros/{id}", s.PomodoroDeleteByID())
+	s.router.Post(POMODORO_ID_PATH, s.PomodoroSave())
+	s.router.Get(POMODORO_ID_PATH, s.PomodoroGetByID())
+	s.router.Delete(POMODORO_ID_PATH, s.PomodoroDeleteByID())
 
-	s.router.Get("/status", s.StatusGet())
-	s.router.Post("/status", s.StatusSave())
+	s.router.Get(STATUS_PATH, s.StatusGet())
+	s.router.Post(STATUS_PATH, s.StatusSave())
 
 	return nil
 
@@ -53,7 +61,7 @@ func New(config *koanf.Koanf) (core.Server, error) {
 
 	// Log Requests - Use appropriate format depending on the encoding
 	if config.Bool("server.log_requests") {
-		r.Use(loggerHTTPMiddlewareDefault(config.Bool("server.log_requests_body"), config.Strings("server.log_disabled_http")))
+		r.Use(loggerHTTPMiddlewareDefault(config.Bool("server.log_requests_body"), config.Bool("server.log_duration")))
 	}
 
 	// CORS Config
@@ -102,12 +110,6 @@ func (s *RestServer) Start() {
 		}
 	}()
 	s.logger.Infow("API Listening", "address", s.server.Addr, "tls", s.conf.Bool("server.tls"))
-
-	// Enable profiler
-	if s.conf.Bool("server.profiler_enabled") && s.conf.String("server.profiler_path") != "" {
-		zap.S().Debugw("Profiler enabled on API", "path", s.conf.String("server.profiler_path"))
-		s.router.Mount(s.conf.String("server.profiler_path"), middleware.Profiler())
-	}
 }
 
 // Router returns the router

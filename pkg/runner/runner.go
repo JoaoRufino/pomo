@@ -8,19 +8,7 @@ import (
 )
 
 func NewRunner(client core.Client, task *models.Task) (core.Runner, error) {
-	tr := &TaskRunner{
-		taskID:       task.ID,
-		taskMessage:  task.Message,
-		nPomodoros:   task.NPomodoros,
-		origDuration: task.Duration,
-		client:       client,
-		state:        models.State(0),
-		pause:        make(chan bool),
-		toggle:       make(chan bool),
-		notifier:     models.NewXnotifier(client.Config().String("icon.path")),
-		duration:     task.Duration,
-	}
-	return tr, nil
+	return NewTaskRunner(client, task)
 }
 
 type TaskRunner struct {

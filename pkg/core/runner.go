@@ -13,5 +13,6 @@ type Runner interface {
 	Status() *models.Status
 	Toggle()
 	Pause()
+	Start()
 	StartUI()
 }

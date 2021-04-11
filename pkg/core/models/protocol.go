@@ -7,6 +7,7 @@ type Protocol struct {
 
 type Payload interface {
 }
+
 type CmdID int
 
 const (
@@ -17,4 +18,9 @@ const (
 	Cmd_GetServerStatus
 	Cmd_GetTask
 	Cmd_UpdateStatus
+)
+
+const (
+	ErrWrongMessageType = "wrong message type provided: got %d but wanted %d"
+	ErrWrongDataType    = "wrong data type: got type %T but wanted %T"
 )

@@ -26,7 +26,7 @@ func NewTaskCreateCommand(pomoCli cli.Cli) *cobra.Command {
 		Short: "create task",
 		Long:  `create task`,
 		Run: func(cmd *cobra.Command, args []string) {
-			_create(pomoCli, &options)
+			create(pomoCli, &options)
 		},
 	}
 
@@ -46,7 +46,7 @@ func NewTaskCreateCommand(pomoCli cli.Cli) *cobra.Command {
 }
 
 // creates a task
-func _create(pomoCli cli.Cli, options *createOptions) {
+func create(pomoCli cli.Cli, options *createOptions) {
 	parsed, err := time.ParseDuration(options.duration)
 	maybe(err, pomoCli.Logger())
 

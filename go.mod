@@ -13,6 +13,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/go-chi/chi v1.5.4 // indirect
 	github.com/go-chi/cors v1.2.0 // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/jawher/mow.cli v1.0.4
 	github.com/knadh/koanf v0.15.0 // indirect
 	github.com/maruel/panicparse v0.0.0-20180806203336-f20d4c4d746f

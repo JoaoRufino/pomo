@@ -16,7 +16,6 @@ func SummarizeTasks(datetimeformat string, tasks models.List) {
 			start = task.Pomodoros[0].Start.Format(datetimeformat)
 		}
 		fmt.Printf("%d: [%s] [%s] ", task.ID, start, task.Duration.Truncate(time.Second))
-
 		printPomodoros(&task)
 		// Tags
 		if len(task.Tags) > 0 {
@@ -55,11 +54,11 @@ func printTags(task *models.Task) {
 func printPomodoros(task *models.Task) {
 	fmt.Printf("[")
 	for i, pomodoro := range task.Pomodoros {
-		if i > -1 {
+		if i > 0 {
 			fmt.Printf(" ")
 		}
-		// pomodoro exceeded it's expected duration by more than 4m
-		if pomodoro.Duration() > task.Duration+4*time.Minute {
+		// pomodoro exceeded it's expected duration by more than 5m
+		if pomodoro.Duration() > task.Duration+5*time.Minute {
 			color.New(color.FgYellow).Printf("X")
 		} else {
 			// pomodoro completed normally
@@ -67,8 +66,8 @@ func printPomodoros(task *models.Task) {
 		}
 	}
 	// each missed pomodoro
-	for i := -1; i < task.NPomodoros-len(task.Pomodoros); i++ {
-		if i > -1 || i == 0 && len(task.Pomodoros) > 0 {
+	for i := 0; i < task.NPomodoros-len(task.Pomodoros); i++ {
+		if i > 0 || i == 0 && len(task.Pomodoros) > 0 {
 			fmt.Printf(" ")
 		}
 		color.New(color.FgRed).Printf("X")

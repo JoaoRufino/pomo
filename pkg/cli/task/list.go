@@ -43,7 +43,7 @@ func NewTaskListCommand(pomoCli cli.Cli) *cobra.Command {
 		Short: "List tasks",
 		Long:  `List all tasks`,
 		Run: func(cmd *cobra.Command, args []string) {
-			list(pomoCli, &options)
+			maybe(list(pomoCli, &options), pomoCli.Logger())
 		},
 	}
 
@@ -58,15 +58,21 @@ func NewTaskListCommand(pomoCli cli.Cli) *cobra.Command {
 	return taskListCmd
 }
 
-func list(pomoCli cli.Cli, options *listOptions) {
+func list(pomoCli cli.Cli, options *listOptions) error {
 	pomoCli.Logger().Debug("Cli request for task list")
 	parsed, err := time.ParseDuration(options.duration)
-	maybe(err, pomoCli.Logger())
+	if err != nil {
+		return err
+	}
 
 	//get the list from the Server
-	plist, err := pomoCli.Client().GetTaskList()
-	list := *plist
-	maybe(err, pomoCli.Logger())
+
+	list := models.List{}
+	if plist, err := pomoCli.Client().GetTaskList(); err != nil {
+		return err
+	} else {
+		list = *plist
+	}
 
 	//parse it accordingly
 	pomoCli.Logger().Debugf("List has %d tasks", len(list))
@@ -80,8 +86,11 @@ func list(pomoCli cli.Cli, options *listOptions) {
 		list = list[0:options.limit]
 	}
 	if options.asJSON {
-		maybe(json.NewEncoder(os.Stdout).Encode(&list), pomoCli.Logger())
+		if err := json.NewEncoder(os.Stdout).Encode(&list); err != nil {
+			return err
+		}
 	} else {
 		runnerC.SummarizeTasks(pomoCli.Client().Config().String("server.datatimeformat"), list)
 	}
+	return nil
 }

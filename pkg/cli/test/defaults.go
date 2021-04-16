@@ -26,7 +26,7 @@ func ConfFromDefaults(k *koanf.Koanf) error {
 		"server.type":           "rest",
 		"server.rest.host":      "",
 		"server.rest.port":      "8080",
-		"server.unix.socket":    defaultConfigPath() + "/pomo.sock",
+		"server.unix.socket":    "../../test/pomo.sock",
 		"server.datetimeformat": "2006-01-02 15:04",
 		"server.log_requests":   true,
 
@@ -44,6 +44,6 @@ func ConfFromDefaults(k *koanf.Koanf) error {
 		"database.sleep_between_retries": "7s",
 		"database.max_connections":       40,
 		"database.log_queries":           true,
-		"database.path":                  defaultConfigPath() + "/pomo.db",
+		"database.path":                  "../../test/pomo.db",
 	}, "."), nil)
 }

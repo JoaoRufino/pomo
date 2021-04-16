@@ -2,11 +2,11 @@ package task
 
 import (
 	"bytes"
-	"fmt"
-	"io/ioutil"
 	"testing"
 
 	"github.com/joao.rufino/pomo/pkg/cli/test"
+	testClient "github.com/joao.rufino/pomo/pkg/client/test"
+	"github.com/joao.rufino/pomo/pkg/core/models"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 )
@@ -79,57 +79,94 @@ func TestTaskListBuildContainerListOptions(t *testing.T) {
 }
 func TestTaskListErrors(t *testing.T) {
 	testCases := []struct {
+		doc           string
 		args          []string
 		flags         map[string]string
 		taskListFunc  func(listOptions) error
 		expectedError string
 	}{
 		{
-			args: []string{"--in"},
-			flags: map[string]string{
-				"format": "{{invalid}}",
-			},
-			expectedError: `unknown flag --in`},
-		{
-			flags: map[string]string{
-				"format": "{{list}}",
-			},
-			expectedError: `wrong number of args for join`,
-		},
-		{
-			taskListFunc: func(listOptions) error {
-				return fmt.Errorf("error listing containers")
-			},
-			expectedError: "error listing containers",
+			doc:           "unknown flag",
+			args:          []string{"--fake"},
+			flags:         map[string]string{},
+			expectedError: `unknown flag: --fake`,
 		},
 	}
-
 	buf := new(bytes.Buffer)
 	mockCli := test.NewMockCli()
 	cmd := NewTaskListCommand(mockCli)
 	cmd.SetOut(buf)
 
 	for _, tc := range testCases {
-		cmd.SetArgs(tc.args)
-		for key, value := range tc.flags {
-			cmd.Flags().Set(key, value)
-		}
-		cmd.Execute()
-		assert.Check(t, is.Equal(buf.String(), tc.expectedError))
+		t.Run(tc.doc, func(t *testing.T) {
+			cmd.SetArgs(tc.args)
+			for key, value := range tc.flags {
+				cmd.Flags().Set(key, value)
+			}
+			assert.ErrorContains(t, cmd.Execute(), tc.expectedError)
+		})
 	}
 }
 
-func Test_ExecuteCommand(t *testing.T) {
-	cmd := NewTaskListCommand(nil)
-	b := bytes.NewBufferString("")
-	cmd.SetOut(b)
-	cmd.SetArgs([]string{"--in", "testisawesome"})
-	cmd.Execute()
-	out, err := ioutil.ReadAll(b)
-	if err != nil {
-		t.Fatal(err)
+func TestRunTaskListWithInvalidArguments(t *testing.T) {
+	var testcases = []struct {
+		doc         string
+		options     listOptions
+		expectedErr string
+	}{
+		{
+			doc: "invalid duration",
+			options: listOptions{
+				duration: "r",
+			},
+			expectedErr: "time: invalid duration \"r\"",
+		},
 	}
-	if string(out) != "testisawesome" {
-		t.Fatalf("expected \"%s\" got \"%s\"", "testisawesome", string(out))
+	for _, testcase := range testcases {
+		t.Run(testcase.doc, func(t *testing.T) {
+			err := list(test.NewMockCli(), &testcase.options)
+			assert.Error(t, err, testcase.expectedErr)
+		})
+	}
+}
+
+func TestRunTaskList(t *testing.T) {
+	var testcases = []struct {
+		doc            string
+		clientOptions  testClient.MockClientOptions
+		options        listOptions
+		expectedResult string
+	}{
+		{
+			doc: "all values",
+			options: listOptions{
+				duration: "24h",
+			},
+			clientOptions: testClient.MockClientOptions{
+				List: &models.List{
+					{
+						ID:         1,
+						Message:    "ola",
+						Pomodoros:  nil,
+						Tags:       []string{},
+						NPomodoros: 0,
+						Duration:   1,
+					},
+				},
+			},
+			expectedResult: "",
+		},
+	}
+
+	for _, testcase := range testcases {
+		mockCli := test.NewMockCli()
+		client := testClient.NewMockClient(mockCli.Config(), testcase.clientOptions)
+		mockCli.SetClient(&client)
+		t.Run(testcase.doc, func(t *testing.T) {
+			err := list(mockCli, &testcase.options)
+			if err != nil {
+				assert.Error(t, err, testcase.expectedResult)
+			}
+		})
 	}
 }

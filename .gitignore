@@ -28,6 +28,8 @@ _testmain.go
 bin/*
 !bin/.gitkeep
 
+main
+
 www/public/
 www/data/
 www/static/install.sh

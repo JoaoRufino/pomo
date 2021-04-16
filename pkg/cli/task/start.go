@@ -1,6 +1,8 @@
 package task
 
 import (
+	"errors"
+
 	"github.com/joao.rufino/pomo/pkg/cli"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +21,7 @@ func NewTaskStartCommand(pomoCli cli.Cli) *cobra.Command {
 		Short: "start task",
 		Long:  `start a task`,
 		Run: func(cmd *cobra.Command, args []string) {
-			start(pomoCli, &options)
+			maybe(start(pomoCli, &options), pomoCli.Logger())
 		},
 	}
 
@@ -31,6 +33,10 @@ func NewTaskStartCommand(pomoCli cli.Cli) *cobra.Command {
 	return taskStartCmd
 }
 
-func start(pomoCli cli.Cli, options *startOptions) {
+func start(pomoCli cli.Cli, options *startOptions) error {
+	if pomoCli.Client() == nil {
+		return errors.New("client not defined")
+	}
 	pomoCli.Client().StartTask(options.taskID)
+	return nil
 }

@@ -29,6 +29,7 @@ bin/*
 !bin/.gitkeep
 
 main
+.scannerwork
 
 www/public/
 www/data/

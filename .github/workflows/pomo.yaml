@@ -3,9 +3,9 @@ name: Docker Image CI to DockerHub
 on:
   push:
   push:
-    branches: [ features/unitTesting ]
+    branches: [feature/argoCDintegration ]
   pull_request:
-    branches: [ features/unitTesting ]
+    branches: [feature/argoCDintegration ]
 
   steps:
       -

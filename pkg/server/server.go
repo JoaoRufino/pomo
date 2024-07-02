@@ -15,36 +15,75 @@ type Server struct {
 	listener net.Listener
 	runner   Runner
 	running  bool
+	mu       sync.Mutex
 }
 
 type Runner interface {
 	Status() *Status
 }
 
+// listen handles incoming connections and responds with the current status
 func (s *Server) listen() {
-	for s.running {
-		conn, err := s.listener.Accept()
-		if err != nil {
+	for {
+		s.mu.Lock()
+		if !s.running {
+			s.mu.Unlock()
 			break
 		}
-		buf := make([]byte, 512)
-		// Ignore any content
-		conn.Read(buf)
-		raw, _ := json.Marshal(s.runner.Status())
-		conn.Write(raw)
-		conn.Close()
+		s.mu.Unlock()
+
+		conn, err := s.listener.Accept()
+		if err != nil {
+			// Log the error and continue
+			fmt.Printf("Error accepting connection: %v\n", err)
+			continue
+		}
+
+		go s.handleConnection(conn)
 	}
 }
 
+// handleConnection processes a single connection
+func (s *Server) handleConnection(conn net.Conn) {
+	defer conn.Close()
+
+	buf := make([]byte, 512)
+	if _, err := conn.Read(buf); err != nil {
+		// Log the error
+		fmt.Printf("Error reading from connection: %v\n", err)
+		return
+	}
+
+	status := s.runner.Status()
+	raw, err := json.Marshal(status)
+	if err != nil {
+		// Log the error
+		fmt.Printf("Error marshalling status: %v\n", err)
+		return
+	}
+
+	if _, err := conn.Write(raw); err != nil {
+		// Log the error
+		fmt.Printf("Error writing to connection: %v\n", err)
+	}
+}
+
+// Start begins the server's listening process
 func (s *Server) Start() {
+	s.mu.Lock()
 	s.running = true
+	s.mu.Unlock()
 	go s.listen()
 }
 
+// Stop halts the server's listening process
 func (s *Server) Stop() {
+	s.mu.Lock()
 	s.running = false
+	s.mu.Unlock()
 	s.listener.Close()
 }
+
 
 func NewServer(runner Runner) (*Server, error) {
 	//check if socket file exists
@@ -68,34 +107,3 @@ func NewServer(runner Runner) (*Server, error) {
 	return &Server{listener: listener, runner: runner}, nil
 }
 
-// Client makes requests to a listening
-// pomo server to check the status of
-// any currently running task session.
-type Client struct {
-	conn net.Conn
-}
-
-func (c Client) read(statusCh chan *Status) {
-	buf := make([]byte, 512)
-	n, _ := c.conn.Read(buf)
-	status := &Status{}
-	json.Unmarshal(buf[0:n], status)
-	statusCh <- status
-}
-
-func (c Client) Status() (*Status, error) {
-	statusCh := make(chan *Status)
-	c.conn.Write([]byte("status"))
-	go c.read(statusCh)
-	return <-statusCh, nil
-}
-
-func (c Client) Close() error { return c.conn.Close() }
-
-func NewClient(path string) (*Client, error) {
-	conn, err := net.Dial("unix", path)
-	if err != nil {
-		return nil, err
-	}
-	return &Client{conn: conn}, nil
-}

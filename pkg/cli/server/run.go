@@ -12,17 +12,17 @@ import (
 // NewConfigCommand returns a cobra command for `config` subcommands
 func NewServerInitCommand(pomoCli cli.Cli) *cobra.Command {
 	serverInitCmd := &cobra.Command{
-		Use:   "init",
-		Short: "Init server",
-		Long:  `Start API`,
+		Use:   "run",
+		Short: "run server",
+		Long:  `Start Server`,
 		Run: func(cmd *cobra.Command, args []string) { // Initialize the databse
-			db, err := store.NewStore(pomoCli.Config())
+			db, err := store.NewStore(pomoCli.Config(), pomoCli.Logger())
 			maybe(err, pomoCli.Logger())
 			defer db.Close()
-			server, err := server.NewServer(pomoCli.Config(), nil)
-			pomoCli.SetServer(&server)
+			serv, err := server.NewServer(pomoCli.Config())
 			maybe(err, pomoCli.Logger())
-			server.Start()
+			pomoCli.SetServer(&serv)
+			serv.Start()
 
 			conf.Stop.InitInterrupt()
 			<-conf.Stop.Chan() // Wait until Stop

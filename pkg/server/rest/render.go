@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/rs/xid"
 )
 
-// RenderJSON writes an http response using the value passed in v as JSON.
-// If it cannot convert the value to JSON, it returns an error
+// RenderJSON writes an HTTP response using the value passed in v as JSON.
+// If it cannot convert the value to JSON, it returns an error.
 func RenderJSON(w http.ResponseWriter, code int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	b := new(bytes.Buffer)
@@ -69,6 +68,6 @@ func errString(err error) string {
 }
 
 func DecodeJSON(r io.Reader, v interface{}) error {
-	defer io.Copy(ioutil.Discard, r)
+	defer io.Copy(io.Discard, r)
 	return json.NewDecoder(r).Decode(v)
 }

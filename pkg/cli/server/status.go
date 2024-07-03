@@ -12,7 +12,7 @@ func NewServerStatusCommand(pomoCli cli.Cli) *cobra.Command {
 		Short: "Check server status",
 		Long:  `Check server status`,
 		Run: func(cmd *cobra.Command, args []string) { // Initialize the databse
-			db, err := store.NewStore(pomoCli.Config())
+			db, err := store.NewStore(pomoCli.Config(), pomoCli.Logger())
 			maybe(err, pomoCli.Logger())
 			defer db.Close()
 			maybe(db.InitDB(), pomoCli.Logger())

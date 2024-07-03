@@ -1,11 +1,13 @@
 package rest
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/joaorufino/pomo/pkg/core/models"
+	"gorm.io/gorm"
 )
 
 // TaskSave saves a task
@@ -88,7 +90,7 @@ func (s *RestServer) TaskGetByID() http.HandlerFunc {
 		taskID, _ := strconv.Atoi(id)
 		task, err := s.store.TaskGetByID(ctx, taskID)
 		if err != nil {
-			if err == models.ErrNotFound {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				RenderErrResourceNotFound(w, "task")
 			} else if serr, ok := err.(*models.Error); ok {
 				RenderErrInvalidRequest(w, serr.ErrorForOp(models.ErrorOpGet))

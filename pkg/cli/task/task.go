@@ -25,7 +25,7 @@ var (
 //	 │   └── status
 //
 // /
-// NewServerCommand returns a cobra command for `server` subcommands
+// NewTaskCommand returns a cobra command for `task` subcommands
 func NewTaskCommand(pomoCli cli.Cli) *cobra.Command {
 	taskCmd := &cobra.Command{
 		Use:   "task",
@@ -34,7 +34,7 @@ func NewTaskCommand(pomoCli cli.Cli) *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			c, err := client.NewClient(pomoCli.Config())
 			maybe(err, pomoCli.Logger())
-			pomoCli.SetClient(c)
+			pomoCli.SetClient(&c)
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
 			pomoCli.Client().Close()

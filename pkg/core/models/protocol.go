@@ -3,6 +3,7 @@ package models
 type Protocol struct {
 	Cid     CmdID
 	Payload Payload
+	Error   *string `json:"omitempty"`
 }
 
 type Payload interface {

@@ -62,6 +62,7 @@ func create(pomoCli cli.Cli, options *createOptions) {
 	//if the user requested to start the created task
 	if options.start {
 		pomoCli.Client().StartTask(taskID)
+		pomoCli.Logger().Infof("Task id: %d created and started", taskID)
 	} else {
 		pomoCli.Logger().Debugf("Task id: %d created", taskID)
 	}

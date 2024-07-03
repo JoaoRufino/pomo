@@ -14,7 +14,7 @@ server:
   type: rest 
   restHost: ""
   restPort: "8080"
-  unixSocket: ~/.pomo/pomo.sock
+  unixSocket: .pomo/pomo.sock
   datetimeFormat: "2006-01-02 15:04"
   logRequests: true
 
@@ -32,7 +32,7 @@ database:
   sleepBetweenRetries: "7s"
   maxConnections: 40
   logQueries: true
-  path: ~/.pomo/pomo.db
+  path: .pomo/pomo.db
 
 cors:
   allowedOrigins: []
@@ -44,8 +44,8 @@ cors:
 runner:
   colors: {}
   datetimeFmt: "2006-01-02 15:04"
-  basePath: ~/.pomo
-  dbPath: ~/.pomo/pomo.db
-  socketPath: ~/.pomo/pomo.sock
-  iconPath: ~/.pomo/icon.png
+  basePath: .pomo
+  dbPath: .pomo/pomo.db
+  socketPath: .pomo/pomo.sock
+  iconPath: .pomo/icon.png
 

@@ -33,6 +33,7 @@ func NewRootCommand(pomoCli *cli.PomoCli) *cobra.Command {
 
 // Execute starts the program
 func Execute() {
+	// load default config
 	pomoCli, err := cli.NewPomoCli("")
 	if err != nil {
 		log.Fatal(err)

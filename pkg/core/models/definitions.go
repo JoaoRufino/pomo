@@ -1,6 +1,9 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"time"
@@ -58,16 +61,37 @@ func (w *Wheel) String() string {
 
 // Task describes some activity
 type Task struct {
-	ID      int    `json:"id"`
-	Message string `json:"message"`
+	ID      int    `json:"id" gorm:"primaryKey"`
+	Message string `json:"message" "gorm:"not null"`
 	// Array of completed pomodoros
-	Pomodoros []*Pomodoro `json:"pomodoros"`
+	Pomodoros []*Pomodoro `json:"pomodoros" "gorm:"foreignKey:TaskID"`
 	// Free-form tags associated with this task
-	Tags []string `json:"tags"`
+	Tags Tags `json:"tags"`
 	// Number of pomodoros for this task
 	NPomodoros int `json:"n_pomodoros"`
 	// Duration of each pomodoro
 	Duration time.Duration `json:"duration"`
+}
+
+// Tags is a custom type to handle a slice of strings in the database
+type Tags []string
+
+// Value implements the driver.Valuer interface for database serialization
+func (t Tags) Value() (driver.Value, error) {
+	return json.Marshal(t)
+}
+
+// Scan implements the sql.Scanner interface for database deserialization
+func (t *Tags) Scan(value interface{}) error {
+	if value == nil {
+		*t = nil
+		return nil
+	}
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("failed to convert database value to []byte")
+	}
+	return json.Unmarshal(bytes, t)
 }
 
 type ListResults struct {
@@ -100,8 +124,10 @@ func After(start time.Time, tasks []Task) []Task {
 // Pomodoro is a unit of time to spend working
 // on a single task.
 type Pomodoro struct {
-	Start time.Time `json:"start"`
-	End   time.Time `json:"end"`
+	ID     int       `json:"-" gorm:"primaryKey"`
+	TaskID int       `json:"-" gorm:"not null"`
+	Start  time.Time `json:"start" gorm:"not null"`
+	End    time.Time `json:"end" gorm:"not null"`
 }
 
 // PomodoroWithID is a unit for requesting

@@ -1,22 +1,23 @@
 package store
 
 import (
-	"errors"
-	"os/user"
-	"path"
+	"fmt"
 
 	"github.com/joaorufino/pomo/pkg/conf"
 	"github.com/joaorufino/pomo/pkg/core"
+	"github.com/joaorufino/pomo/pkg/store/postgresql"
 	"github.com/joaorufino/pomo/pkg/store/sqlite"
-	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
-func NewStore(conf *conf.Config) (core.Store, error) {
+func NewStore(conf *conf.Config, logger *zap.SugaredLogger) (core.Store, error) {
 	switch conf.Database.Type {
 	case "sqlite":
-		u, _ := user.Current()
-		return sqlite.NewStore(path.Join(u.HomeDir, conf.Database.Path))
+		return sqlite.NewStore(conf.Database.Path, logger)
+	case "postgres":
+		return postgresql.NewStore(conf.Database.Path, logger)
 	default:
-		return nil, errors.New("unknown store type: " + viper.GetString("database.type"))
+		err := fmt.Errorf("unknown store type: %s", conf.Database.Type)
+		return nil, err
 	}
 }

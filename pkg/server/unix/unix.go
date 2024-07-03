@@ -2,6 +2,7 @@ package unix
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -11,17 +12,10 @@ import (
 	"github.com/joaorufino/pomo/pkg/core/models"
 	serverStore "github.com/joaorufino/pomo/pkg/store"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-func maybe(err error, logger *zap.SugaredLogger) {
-	if err != nil {
-		logger.Fatalf("Error:%s\n", err)
-		os.Exit(1)
-	}
-}
-
-// UnixServer listens on a Unix domain socket
-// for Pomo status requests
+// UnixServer listens on a Unix domain socket for Pomo status requests
 type UnixServer struct {
 	listener net.Listener
 	running  bool
@@ -30,181 +24,278 @@ type UnixServer struct {
 	status   models.Status
 }
 
-// listens for client requests following models.Protocol
-// cid drives the response
-func (s UnixServer) listen() {
-	s.logger.Info("Listening")
-	for s.running {
-		buf := make([]byte, 1024)
-		conn, err := s.listener.Accept()
-		maybe(err, s.logger)
-		defer conn.Close()
-		n, _ := conn.Read(buf)
-
-		//data was received
-		if n != 0 {
-			s.logger.Debugf("Incoming request")
-			message := models.Protocol{}
-
-			//Unmarshal to get CommandID
-			err := json.Unmarshal(buf[0:n], &message)
-			maybe(err, s.logger)
-
-			switch message.Cid {
-			//get server status
-			case models.Cmd_GetServerStatus:
-				s.logger.Debug("Incoming status request")
-				_ = s.sendResponse(message.Cid, s.status, conn)
-
-			//get all tasks
-			case models.Cmd_GetList:
-				s.logger.Debug("Incoming task list request")
-				tasks, err := s.store.GetAllTasks(nil)
-				maybe(err, s.logger)
-				_ = s.sendResponse(message.Cid, tasks, conn)
-
-			//create a task return
-			case models.Cmd_CreateTask:
-				s.createTask(buf[0:n], conn)
-			//delete a task by id
-			case models.Cmd_DeleteTask:
-				s.deleteTask(buf[0:n], conn)
-			//get a task by ID
-			case models.Cmd_GetTask:
-				s.getTask(buf[0:n], conn)
-
-			//get a pomodoro by taskID
-			case models.Cmd_CreatePomodoro:
-				s.createPomodoro(buf[0:n], conn)
-
-			//update server status
-			case models.Cmd_UpdateStatus:
-				s.updateStatus(buf[0:n], conn)
-			}
+// Init initializes the server structure
+func (s *UnixServer) Init(config *conf.Config) (*UnixServer, error) {
+	socketPath := config.Server.UnixSocket
+	if _, err := os.Stat(socketPath); err == nil {
+		conn, err := net.Dial("unix", socketPath)
+		if err != nil {
+			os.Remove(socketPath)
+		} else {
+			conn.Close()
+			return nil, fmt.Errorf("socket %s is already in use", socketPath)
 		}
 	}
-}
-func (s UnixServer) deleteTask(buffer []byte, conn net.Conn) {
-	s.logger.Debug("Incoming delete task request")
-	payload := models.Protocol{Payload: 0}
-	json.Unmarshal(buffer, &payload)
-	taskId, ok := payload.Payload.(float64)
-	valid(ok, s.logger, payload.Payload, taskId)
 
-	s.logger.Debugf("TaskId:%d", taskId)
-	err := s.store.TaskDeleteByID(nil, int(taskId))
-	maybe(err, s.logger)
-	_ = s.sendResponse(payload.Cid, "", conn)
-}
-func (s UnixServer) getTask(buffer []byte, conn net.Conn) {
-	s.logger.Debug("Incoming get task request")
-	payload := models.Protocol{Payload: 0}
-	json.Unmarshal(buffer, &payload)
-	taskId, ok := payload.Payload.(float64)
-	valid(ok, s.logger, payload.Payload, taskId)
+	logger := zap.S().With("package", "unix")
+	store, err := serverStore.NewStore(config, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create store: %w", err)
+	}
 
-	s.logger.Debugf("TaskId:%d", taskId)
-	var task *models.Task
-	task, err := s.store.TaskGetByID(nil, int(taskId))
-	maybe(err, s.logger)
-	err = s.store.PomodoroDeleteByTaskID(nil, int(taskId))
-	maybe(err, s.logger)
-	task.Pomodoros = []*models.Pomodoro{}
-	_ = s.sendResponse(payload.Cid, task, conn)
-}
-func (s UnixServer) createPomodoro(buffer []byte, conn net.Conn) {
-	s.logger.Debug("Incoming create pomodoro request")
-	payload := models.Protocol{Payload: &models.PomodoroWithID{}}
-	json.Unmarshal(buffer, &payload)
-	pomodoro, ok := payload.Payload.(*models.PomodoroWithID)
-	valid(ok, s.logger, payload.Payload, pomodoro)
+	listener, err := net.Listen("unix", socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen on socket %s: %w", socketPath, err)
+	}
 
-	err := s.store.PomodoroSave(nil, pomodoro.TaskID, &pomodoro.Pomodoro)
-	maybe(err, s.logger)
-	_ = s.sendResponse(payload.Cid, err.Error(), conn)
-}
-func (s UnixServer) createTask(buffer []byte, conn net.Conn) {
-	s.logger.Debug("Incoming create task request")
-	var taskId int
-	payload := models.Protocol{Payload: &models.Task{}}
-	json.Unmarshal(buffer, &payload)
-	task, ok := payload.Payload.(*models.Task)
-	valid(ok, s.logger, payload.Payload, task)
-
-	taskId, err := s.store.TaskSave(nil, task)
-	maybe(err, s.logger)
-	_ = s.sendResponse(payload.Cid, taskId, conn)
-}
-func (s UnixServer) updateStatus(buffer []byte, conn net.Conn) {
-	s.logger.Debug("Incoming update status request")
-
-	payload := models.Protocol{Payload: &models.Status{}}
-	json.Unmarshal(buffer, &payload)
-
-	status, ok := payload.Payload.(*models.Status)
-	valid(ok, s.logger, payload.Payload, status)
-
-	s.status = *status
-	_ = s.sendResponse(payload.Cid, "", conn)
+	return &UnixServer{
+		listener: listener,
+		logger:   logger,
+		store:    store,
+		status:   models.Status{},
+	}, nil
 }
 
-// makeRequest sends a message to the server
-// using the protocol structure
-func (s UnixServer) sendResponse(cid models.CmdID, payload interface{}, conn net.Conn) error {
-	raw, err := json.Marshal(&models.Protocol{Cid: cid, Payload: payload})
-	maybe(err, s.logger)
-	s.logger.Debugf("writing tasks:%s", string(raw))
-	conn.Write(raw)
-	return nil
-}
-
-// Starts the server
-func (s UnixServer) Start() {
+// Start starts the Unix server
+func (s *UnixServer) Start() {
 	s.running = true
 	s.listen()
 }
 
-// Stops the server
-func (s UnixServer) Stop() {
+// Stop stops the Unix server
+func (s *UnixServer) Stop() {
 	s.running = false
-	s.listener.Close()
-	s.store.Close()
+	if err := s.listener.Close(); err != nil {
+		s.logger.Errorf("Error closing listener: %v", err)
+	}
+	if err := s.store.Close(); err != nil {
+		s.logger.Errorf("Error closing store: %v", err)
+	}
 }
 
-// Initializes the server structure
-func (s UnixServer) Init(config *conf.Config) (*UnixServer, error) {
-	socketPath := config.Server.UnixSocket
-	if _, err := os.Stat(socketPath); err == nil {
-		_, err := net.Dial("unix", socketPath)
-		//if error then sock file was saved after crash
+func (s *UnixServer) listen() {
+	s.logger.Info("Listening")
+	for s.running {
+		conn, err := s.listener.Accept()
 		if err != nil {
-			os.Remove(socketPath)
-		} else {
-			// another instance of pomo is running
-			return nil, fmt.Errorf("socket %s is already in use", socketPath)
+			s.logger.Errorf("Failed to accept connection: %v", err)
+			continue
 		}
-	}
-	store, err := serverStore.NewStore(config)
-	maybe(err, s.logger)
 
-	//open the socket
-	listener, err := net.Listen("unix", socketPath)
+		go func(conn net.Conn) {
+			defer conn.Close()
+			s.handleConnection(conn)
+		}(conn)
+	}
+}
+
+func (s *UnixServer) handleConnection(conn net.Conn) {
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf)
 	if err != nil {
-		return nil, err
-	}
-	server := &UnixServer{
-		listener: listener,
-		logger:   zap.S().With("package", "server"),
-		store:    store,
-		status:   models.Status{},
+		s.logger.Errorf("Failed to read from connection: %v", err)
+		return
 	}
 
-	return server, nil
+	if n == 0 {
+		return
+	}
 
+	s.logger.Debugf("Incoming request")
+	message := models.Protocol{}
+	if err := json.Unmarshal(buf[:n], &message); err != nil {
+		s.logger.Errorf("Failed to unmarshal request: %v", err)
+		return
+	}
+
+	switch message.Cid {
+	case models.Cmd_GetServerStatus:
+		s.logger.Debug("Incoming status request")
+		s.sendResponse(message.Cid, s.status, conn)
+	case models.Cmd_GetList:
+		s.logger.Debug("Incoming task list request")
+		tasks, err := s.store.GetAllTasks(nil)
+		if err != nil {
+			s.logger.Errorf("Failed to get all tasks: %v", err)
+			s.sendErrorResponse(message.Cid, "Failed to get tasks", conn)
+			return
+		}
+		s.sendResponse(message.Cid, tasks, conn)
+	case models.Cmd_CreateTask:
+		s.createTask(buf[:n], conn)
+	case models.Cmd_DeleteTask:
+		s.deleteTask(buf[:n], conn)
+	case models.Cmd_GetTask:
+		s.getTask(buf[:n], conn)
+	case models.Cmd_CreatePomodoro:
+		s.createPomodoro(buf[:n], conn)
+	case models.Cmd_UpdateStatus:
+		s.updateStatus(buf[:n], conn)
+	default:
+		s.logger.Errorf("Unknown command ID: %v", message.Cid)
+	}
+}
+
+func (s *UnixServer) deleteTask(buffer []byte, conn net.Conn) {
+	s.logger.Debug("Incoming delete task request")
+	payload := models.Protocol{}
+	if err := json.Unmarshal(buffer, &payload); err != nil {
+		s.logger.Errorf("Failed to unmarshal delete task request: %v", err)
+		s.sendErrorResponse(payload.Cid, "Invalid request format", conn)
+		return
+	}
+
+	taskId, ok := payload.Payload.(float64)
+	if !ok {
+		s.logger.Errorf("Invalid payload type for delete task request: %v", payload.Payload)
+		s.sendErrorResponse(payload.Cid, "Invalid payload type", conn)
+		return
+	}
+
+	s.logger.Debugf("TaskId: %d", int(taskId))
+	err := s.store.TaskDeleteByID(nil, int(taskId))
+	if err != nil {
+		s.logger.Errorf("Failed to delete task: %v", err)
+		s.sendErrorResponse(payload.Cid, "Failed to delete task", conn)
+		return
+	}
+	s.sendResponse(payload.Cid, "Task deleted", conn)
+}
+
+func (s *UnixServer) getTask(buffer []byte, conn net.Conn) {
+	s.logger.Debug("Incoming get task request")
+	payload := models.Protocol{}
+	if err := json.Unmarshal(buffer, &payload); err != nil {
+		s.logger.Errorf("Failed to unmarshal get task request: %v", err)
+		s.sendErrorResponse(payload.Cid, "Invalid request format", conn)
+		return
+	}
+
+	taskId, ok := payload.Payload.(float64)
+	if !ok {
+		s.logger.Errorf("Invalid payload type for get task request: %v", payload.Payload)
+		s.sendErrorResponse(payload.Cid, "Invalid payload type", conn)
+		return
+	}
+
+	s.logger.Debugf("TaskId: %d", int(taskId))
+	task, err := s.store.TaskGetByID(nil, int(taskId))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			s.logger.Errorf("Task not found: %v", err)
+			s.sendErrorResponse(payload.Cid, "Task not found", conn)
+		} else {
+			s.logger.Errorf("Failed to get task: %v", err)
+			s.sendErrorResponse(payload.Cid, "Failed to get task", conn)
+		}
+		return
+	}
+
+	err = s.store.PomodoroDeleteByTaskID(nil, int(taskId))
+	if err != nil {
+		s.logger.Errorf("Failed to delete pomodoros for task: %v", err)
+		s.sendErrorResponse(payload.Cid, "Failed to delete pomodoros", conn)
+		return
+	}
+	task.Pomodoros = []*models.Pomodoro{}
+	s.sendResponse(payload.Cid, task, conn)
+}
+
+func (s *UnixServer) createPomodoro(buffer []byte, conn net.Conn) {
+	s.logger.Debug("Incoming create pomodoro request")
+	payload := models.Protocol{Payload: &models.PomodoroWithID{}}
+	if err := json.Unmarshal(buffer, &payload); err != nil {
+		s.logger.Errorf("Failed to unmarshal create pomodoro request: %v", err)
+		s.sendErrorResponse(payload.Cid, "Invalid request format", conn)
+		return
+	}
+
+	pomodoro, ok := payload.Payload.(*models.PomodoroWithID)
+	if !ok {
+		s.logger.Errorf("Invalid payload type for create pomodoro request: %v", payload.Payload)
+		s.sendErrorResponse(payload.Cid, "Invalid payload type", conn)
+		return
+	}
+
+	if err := s.store.PomodoroSave(nil, pomodoro.TaskID, &pomodoro.Pomodoro); err != nil {
+		s.logger.Errorf("Failed to save pomodoro: %v", err)
+		s.sendErrorResponse(payload.Cid, "Failed to save pomodoro", conn)
+		return
+	}
+	s.sendResponse(payload.Cid, "Pomodoro created", conn)
+}
+
+func (s *UnixServer) createTask(buffer []byte, conn net.Conn) {
+	s.logger.Debug("Incoming create task request")
+	payload := models.Protocol{Payload: &models.Task{}}
+	if err := json.Unmarshal(buffer, &payload); err != nil {
+		s.logger.Errorf("Failed to unmarshal create task request: %v", err)
+		s.sendErrorResponse(payload.Cid, "Invalid request format", conn)
+		return
+	}
+
+	task, ok := payload.Payload.(*models.Task)
+	if !ok {
+		s.logger.Errorf("Invalid payload type for create task request: %v", payload.Payload)
+		s.sendErrorResponse(payload.Cid, "Invalid payload type", conn)
+		return
+	}
+
+	taskId, err := s.store.TaskSave(nil, task)
+	if err != nil {
+		s.logger.Errorf("Failed to save task: %v", err)
+		s.sendErrorResponse(payload.Cid, "Failed to save task", conn)
+		return
+	}
+	s.sendResponse(payload.Cid, taskId, conn)
+}
+
+func (s *UnixServer) updateStatus(buffer []byte, conn net.Conn) {
+	s.logger.Debug("Incoming update status request")
+	payload := models.Protocol{Payload: &models.Status{}}
+	if err := json.Unmarshal(buffer, &payload); err != nil {
+		s.logger.Errorf("Failed to unmarshal update status request: %v", err)
+		s.sendErrorResponse(payload.Cid, "Invalid request format", conn)
+		return
+	}
+
+	status, ok := payload.Payload.(*models.Status)
+	if !ok {
+		s.logger.Errorf("Invalid payload type for update status request: %v", payload.Payload)
+		s.sendErrorResponse(payload.Cid, "Invalid payload type", conn)
+		return
+	}
+
+	s.status = *status
+	s.sendResponse(payload.Cid, "Status updated", conn)
+}
+
+func (s *UnixServer) sendResponse(cid models.CmdID, payload interface{}, conn net.Conn) {
+	raw, err := json.Marshal(&models.Protocol{Cid: cid, Payload: payload})
+	if err != nil {
+		s.logger.Errorf("Failed to marshal response: %v", err)
+		return
+	}
+	s.logger.Debugf("Writing response: %s", string(raw))
+	if _, err := conn.Write(raw); err != nil {
+		s.logger.Errorf("Failed to write response: %v", err)
+	}
+}
+
+func (s *UnixServer) sendErrorResponse(cid models.CmdID, message string, conn net.Conn) {
+	raw, err := json.Marshal(&models.Protocol{Cid: cid, Error: &message})
+	if err != nil {
+		s.logger.Errorf("Failed to marshal response: %v", err)
+		return
+	}
+	s.logger.Debugf("Writing response: %s", string(raw))
+	if _, err := conn.Write(raw); err != nil {
+		s.logger.Errorf("Failed to write response: %v", err)
+	}
 }
 
 func valid(ok bool, logger *zap.SugaredLogger, expected interface{}, received interface{}) {
 	if !ok {
-		logger.Fatalf(models.ErrWrongDataType, expected, received)
+		logger.Fatalf("Expected %v but got %v", expected, received)
 	}
 }

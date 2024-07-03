@@ -13,7 +13,7 @@ type Store interface {
 	TaskSave(ctx context.Context, task *models.Task) (int, error)
 	TaskDeleteByID(ctx context.Context, id int) error
 
-	PomodoroGetByTaskID(ctx context.Context, id int) ([]*models.Pomodoro, error)
+	PomodoroGetByTaskID(ctx context.Context, id int) ([]models.Pomodoro, error)
 	PomodoroSave(ctx context.Context, taskID int, pomodoro *models.Pomodoro) error
 	PomodoroDeleteByTaskID(ctx context.Context, id int) error
 	Close() error

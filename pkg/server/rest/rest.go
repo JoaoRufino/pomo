@@ -50,12 +50,13 @@ func (s *RestServer) Setup() error {
 	return nil
 }
 
-// New will setup the API listener
-func New(config *conf.Config) (core.Server, error) {
+// Init will setup the API listener
+func (s *RestServer) Init(config *conf.Config) (core.Server, error) {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 
+	logger := zap.S().With("package", "restServer")
 	// Log Requests - Use appropriate format depending on the encoding
 	if config.Server.LogRequests {
 		r.Use(loggerHTTPMiddlewareDefault(config.Server.LogRequestsBody, config.Server.LogDuration))
@@ -70,16 +71,16 @@ func New(config *conf.Config) (core.Server, error) {
 		MaxAge:           config.CORS.MaxAge,
 	}).Handler)
 
-	store, _ := store.NewStore(config)
+	store, _ := store.NewStore(config, logger)
 
 	server := &http.Server{
 		Addr:    net.JoinHostPort(config.Server.RestHost, config.Server.RestPort),
 		Handler: r,
 	}
 
-	s := &RestServer{
+	s = &RestServer{
 		conf:   config,
-		logger: zap.S().With("package", "restServer"),
+		logger: logger,
 		router: r,
 		store:  store,
 		server: server,
@@ -114,7 +115,13 @@ func (s *RestServer) Router() chi.Router {
 	return s.router
 }
 
+// Stop gracefully shuts down the server.
 func (s *RestServer) Stop() {
-	s.server.Close()
-	s.store.Close()
+	if err := s.server.Close(); err != nil {
+		s.logger.Errorf("Error closing server: %v", err)
+	}
+	if err := s.store.Close(); err != nil {
+		s.logger.Errorf("Error closing store: %v", err)
+	}
+	s.logger.Sync()
 }

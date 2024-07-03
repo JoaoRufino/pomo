@@ -6,7 +6,7 @@ import (
 
 	termui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
-	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/core/models"
 )
 
 func render(wheel *models.Wheel, status *models.Status) *widgets.Paragraph {

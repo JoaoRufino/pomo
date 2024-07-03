@@ -1,17 +1,16 @@
 package test
 
 import (
-	"github.com/joao.rufino/pomo/pkg/client/test"
-	"github.com/joao.rufino/pomo/pkg/conf"
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/knadh/koanf"
+	"github.com/joaorufino/pomo/pkg/client/test"
+	"github.com/joaorufino/pomo/pkg/conf"
+	"github.com/joaorufino/pomo/pkg/core"
 	"go.uber.org/zap"
 )
 
 type MockCli struct {
 	version    string
 	executable string
-	config     *koanf.Koanf
+	config     *conf.Config
 	logger     *zap.SugaredLogger
 	client     core.Client
 	server     *core.Server
@@ -21,8 +20,7 @@ func NewMockCli() *MockCli {
 	cli := &MockCli{}
 
 	// Global koanf configuration with "." for delimeter
-	cli.config = koanf.New(".")
-	_ = ConfFromDefaults(cli.config)
+	cli.config = ConfFromDefaults(cli.config)
 
 	client := test.NewMockClient(cli.config, test.MockClientOptions{})
 	cli.client = client
@@ -48,7 +46,7 @@ func (cli *MockCli) SetExecutable(executable string) {
 	cli.executable = executable
 }
 
-func (cli *MockCli) Config() *koanf.Koanf {
+func (cli *MockCli) Config() *conf.Config {
 	return cli.config
 }
 
@@ -63,7 +61,7 @@ func (cli *MockCli) SetLogger(logger *zap.SugaredLogger) {
 }
 
 // SetConfigFile sets the "fake" config file
-func (cli *MockCli) SetConfigFile(configfile *koanf.Koanf) {
+func (cli *MockCli) SetConfigFile(configfile *conf.Config) {
 	cli.config = configfile
 }
 

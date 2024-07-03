@@ -7,9 +7,9 @@ import (
 	"net"
 	"os"
 
-	"github.com/joao.rufino/pomo/pkg/core/models"
-	"github.com/joao.rufino/pomo/pkg/runner"
-	"github.com/knadh/koanf"
+	"github.com/joaorufino/pomo/pkg/conf"
+	"github.com/joaorufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/runner"
 	"go.uber.org/zap"
 )
 
@@ -18,12 +18,11 @@ import (
 // any currently running task session.
 type UnixClient struct {
 	path   string
-	config *koanf.Koanf
 	logger *zap.SugaredLogger
 }
 
 // makeRequest sends a message to the server
-//using the protocol structure
+// using the protocol structure
 func (c UnixClient) makeRequest(cid models.CmdID, payload interface{}) []byte {
 	conn, err := net.Dial("unix", c.path)
 	maybe(err, c.logger)
@@ -192,15 +191,10 @@ func (c UnixClient) Close() error {
 	return nil
 }
 
-func (c UnixClient) Init(k *koanf.Koanf) (*UnixClient, error) {
-	c.path = k.String("server.unix.socket")
-	c.config = k
+func (c UnixClient) Init(config *conf.Config) (*UnixClient, error) {
+	c.path = config.Server.Unix.Socket
 	c.logger = zap.S().With("package", "client")
 	return &c, nil
-}
-
-func (c UnixClient) Config() *koanf.Koanf {
-	return c.config
 }
 
 func maybe(err error, logger *zap.SugaredLogger) {

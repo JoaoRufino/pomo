@@ -3,7 +3,7 @@ package core
 import (
 	"context"
 
-	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/core/models"
 )
 
 // Store is the persistent store of tasks

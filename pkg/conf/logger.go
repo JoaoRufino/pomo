@@ -1,32 +1,31 @@
 package conf
 
 import (
-	"github.com/knadh/koanf"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-// InitLogger loads a global logger based on a koanf configuration
-func InitLogger(k *koanf.Koanf) {
-
+// InitLogger loads a global logger based on Viper configuration
+func InitLogger() {
 	logConfig := zap.NewDevelopmentConfig()
 	logConfig.Sampling = nil
 
 	// Log Level
 	var logLevel zapcore.Level
-	if err := logLevel.Set(k.String("logger.level")); err != nil {
+	if err := logLevel.Set(viper.GetString("logger.level")); err != nil {
 		zap.S().Fatalw("Could not determine logger.level", "error", err)
 	}
 	logConfig.Level.SetLevel(logLevel)
 
 	// Handle different logger encodings
-	loggerEncoding := k.String("logger.encoding")
+	loggerEncoding := viper.GetString("logger.encoding")
 	logConfig.Encoding = loggerEncoding
 	// Enable Color
-	if k.Bool("logger.color") {
+	if viper.GetBool("logger.color") {
 		logConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	}
-	logConfig.DisableStacktrace = k.Bool("logger.disable_stacktrace")
+	logConfig.DisableStacktrace = viper.GetBool("logger.disable_stacktrace")
 	// Use sane timestamp when logging to console
 	if logConfig.Encoding == "console" {
 		logConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -38,11 +37,10 @@ func InitLogger(k *koanf.Koanf) {
 	logConfig.EncoderConfig.CallerKey = "caller"
 
 	// Settings
-	logConfig.Development = k.Bool("logger.dev_mode")
-	logConfig.DisableCaller = k.Bool("logger.disable_caller")
+	logConfig.Development = viper.GetBool("logger.dev_mode")
+	logConfig.DisableCaller = viper.GetBool("logger.disable_caller")
 
 	// Build the logger
 	globalLogger, _ := logConfig.Build()
 	zap.ReplaceGlobals(globalLogger)
-
 }

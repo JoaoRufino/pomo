@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/core"
+	"github.com/joaorufino/pomo/pkg/core/models"
 	_ "github.com/mattn/go-sqlite3"
 )
 

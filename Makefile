@@ -10,7 +10,7 @@ endif
 
 # Linker flags for embedding version info
 LDFLAGS=\
-	-X github.com/joao.rufino/pomo/pkg/internal/version.Version=$(VERSION)
+	-X github.com/joaorufino/pomo/pkg/internal/version.Version=$(VERSION)
 
 # Default target
 .PHONY: \

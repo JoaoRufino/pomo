@@ -1,9 +1,8 @@
 package cli
 
 import (
-	"github.com/joao.rufino/pomo/pkg/conf"
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/knadh/koanf"
+	"github.com/joaorufino/pomo/pkg/conf"
+	"github.com/joaorufino/pomo/pkg/core"
 	"go.uber.org/zap"
 )
 
@@ -12,53 +11,55 @@ import (
 type Cli interface {
 	Version() string
 	Executable() string
-	Config() *koanf.Koanf
+	Config() *conf.Config
 	Logger() *zap.SugaredLogger
 	Server() *core.Server
 	Client() core.Client
 	SetServer(*core.Server)
-	SetClient(*core.Client)
+	SetClient(core.Client)
 }
 
 // PomoCli is an instance the docker command line client.
 // Instances of the client can be returned from NewPomoCli.
 type PomoCli struct {
 	logger *zap.SugaredLogger
-	config *koanf.Koanf
+	config *conf.Config
 	server *core.Server
 	client core.Client
 }
 
-// constructor for abstract class
-func NewPomoCli() (*PomoCli, error) {
+// NewPomoCli creates a new instance of PomoCli.
+func NewPomoCli(configFile string) (*PomoCli, error) {
 	pomoCli := &PomoCli{}
 
-	// Global koanf configuration with "." for delimeter
-	pomoCli.config = koanf.New(".")
-
 	// Load configuration
-	err := conf.ConfFromDefaults(pomoCli.config)
-	if err != nil {
-		return nil, err
+	var err error
+	if configFile != "" {
+		pomoCli.config, err = conf.LoadConfig(configFile)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		pomoCli.config = conf.LoadDefaultConfig()
 	}
-	conf.InitLogger(pomoCli.Config())
+
+	// Initialize the logger
+	conf.InitLogger()
+
 	pomoCli.logger = zap.S().With("package", "cli")
-	if err != nil {
-		return nil, err
-	}
 
 	return pomoCli, nil
 }
 
 func (pomoCli *PomoCli) Executable() string {
-	return pomoCli.config.String("server.name")
+	return pomoCli.config.Server.Name
 }
 
 func (pomoCli *PomoCli) Version() string {
-	return pomoCli.config.String("server.version")
+	return pomoCli.config.Server.Version
 }
 
-func (pomoCli *PomoCli) Config() *koanf.Koanf {
+func (pomoCli *PomoCli) Config() *conf.Config {
 	return pomoCli.config
 }
 
@@ -73,10 +74,11 @@ func (pomoCli *PomoCli) Server() *core.Server {
 func (pomoCli *PomoCli) Client() core.Client {
 	return pomoCli.client
 }
+
 func (pomoCli *PomoCli) SetServer(server *core.Server) {
 	pomoCli.server = server
 }
 
-func (pomoCli *PomoCli) SetClient(client *core.Client) {
-	pomoCli.client = *client
+func (pomoCli *PomoCli) SetClient(client core.Client) {
+	pomoCli.client = client
 }

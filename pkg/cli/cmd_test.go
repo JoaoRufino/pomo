@@ -8,7 +8,7 @@ package cli
 	"path/filepath"
 	"testing"
 
-	pomo "github.com/joao.rufino/pomo/pkg/server"
+	pomo "github.com/joaorufino/pomo/pkg/server"
 )
 
 func checkErr(t *testing.T, err error) {

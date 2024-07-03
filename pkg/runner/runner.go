@@ -3,8 +3,8 @@ package runner
 import (
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/core"
+	"github.com/joaorufino/pomo/pkg/core/models"
 )
 
 func NewRunner(client core.Client, task *models.Task) (core.Runner, error) {

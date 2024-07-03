@@ -1,10 +1,10 @@
 package task
 
 import (
-	"github.com/joao.rufino/pomo/pkg/cli"
+	"github.com/joaorufino/pomo/pkg/cli"
 	"github.com/spf13/cobra"
 
-	runnerC "github.com/joao.rufino/pomo/pkg/runner"
+	runnerC "github.com/joaorufino/pomo/pkg/runner"
 )
 
 // NewConfigCommand returns a cobra command for `config` subcommands

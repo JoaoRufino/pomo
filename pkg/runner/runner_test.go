@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/core/models"
-	"github.com/joao.rufino/pomo/pkg/runner/test"
+	"github.com/joaorufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/store"
 )
 
 func TestTaskRunner(t *testing.T) {

@@ -7,9 +7,9 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/joao.rufino/pomo/pkg/core/models"
-	"github.com/joao.rufino/pomo/pkg/store"
+	"github.com/joaorufino/pomo/pkg/core"
+	"github.com/joaorufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/store"
 	"github.com/knadh/koanf"
 	"go.uber.org/zap"
 )

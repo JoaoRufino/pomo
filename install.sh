@@ -3,8 +3,8 @@
 POMO_VERSION="0.7.1"
 OSX_MD5="369a489fc1e9af234cd5db099c3efd83"
 LINUX_MD5="973f5c83218d1d3df5e43a2e6c171b7f"
-OSX_TARBALL="https://github.com/kevinschoon/pomo/releases/download/$POMO_VERSION/pomo-$POMO_VERSION-darwin-amd64"
-LINUX_TARBALL="https://github.com/kevinschoon/pomo/releases/download/$POMO_VERSION/pomo-$POMO_VERSION-linux-amd64"
+OSX_TARBALL="https://github.com/joaorufino/pomo/releases/download/$POMO_VERSION/pomo-$POMO_VERSION-darwin-amd64"
+LINUX_TARBALL="https://github.com/joaorufino/pomo/releases/download/$POMO_VERSION/pomo-$POMO_VERSION-linux-amd64"
 
 install_pomo() {
     echo "Installing Pomo..."

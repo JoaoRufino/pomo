@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/cli"
-	"github.com/joao.rufino/pomo/pkg/core/models"
-	runnerC "github.com/joao.rufino/pomo/pkg/runner"
+	"github.com/joaorufino/pomo/pkg/cli"
+	"github.com/joaorufino/pomo/pkg/core/models"
+	runnerC "github.com/joaorufino/pomo/pkg/runner"
 	"github.com/spf13/cobra"
 )
 

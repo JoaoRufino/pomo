@@ -1,3 +1,10 @@
+package server
+
+import (
+	"encoding/json"
+	"fmt"
+	"net"
+)
 
 // Client makes requests to a listening
 // pomo server to check the status of
@@ -52,3 +59,4 @@ func NewClient(path string) (*Client, error) {
 		return nil, fmt.Errorf("error dialing unix socket: %w", err)
 	}
 	return &Client{conn: conn}, nil
+}

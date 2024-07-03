@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/core/models"
 	"github.com/knadh/koanf"
 )
 

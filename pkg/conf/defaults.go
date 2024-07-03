@@ -7,68 +7,72 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/knadh/koanf"
-	"github.com/knadh/koanf/parsers/json"
-	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/knadh/koanf/providers/confmap"
-	"github.com/knadh/koanf/providers/file"
+	"github.com/spf13/viper"
 )
 
-// File loads configuration from a file
-// https://github.com/knadh/koanf/blob/master/examples/read-file/main.go
-func ConfFromFile(k *koanf.Koanf, configFile string) error {
+// LoadConfig loads the configuration from the given file
+func LoadConfig(configFile string) (*Config, error) {
+	viper.SetConfigFile(configFile)
 	ext := filepath.Ext(configFile)
-	f := file.Provider(configFile)
 	switch ext {
-	case ".yaml":
-		return k.Load(f, yaml.Parser())
+	case ".yaml", ".yml":
+		viper.SetConfigType("yaml")
 	case ".json":
-		return k.Load(f, json.Parser())
+		viper.SetConfigType("json")
+	default:
+		return nil, fmt.Errorf("unknown config extension %s", ext)
 	}
-	return fmt.Errorf("unknown config extension %s", ext)
+
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, fmt.Errorf("error reading config file: %w", err)
+	}
+
+	var config Config
+	if err := viper.Unmarshal(&config); err != nil {
+		return nil, fmt.Errorf("unable to decode into struct: %w", err)
+	}
+
+	return &config, nil
 }
 
-// Defaults loads the default config for the
-// https://github.com/knadh/koanf/blob/master/examples/default-values/main.go
-func ConfFromDefaults(k *koanf.Koanf) error {
-	return k.Load(confmap.Provider(map[string]interface{}{
-		// Logger Defaults
-		"logger.level":              "debug",
-		"logger.encoding":           "console",
-		"logger.color":              true,
-		"logger.dev_mode":           true,
-		"logger.disable_caller":     false,
-		"logger.disable_stacktrace": true,
+// LoadDefaultConfig loads the default configuration
+func LoadDefaultConfig() *Config {
+	viper.SetDefault("logger.level", "debug")
+	viper.SetDefault("logger.encoding", "console")
+	viper.SetDefault("logger.color", true)
+	viper.SetDefault("logger.dev_mode", true)
+	viper.SetDefault("logger.disable_caller", false)
+	viper.SetDefault("logger.disable_stacktrace", true)
 
-		// Pidfile
-		"pidfile": "",
+	viper.SetDefault("pidfile", "")
 
-		// Server Configuration
-		"server.name":           "pomo",
-		"server.version":        "debug",
-		"server.type":           "rest",
-		"server.rest.host":      "",
-		"server.rest.port":      "8080",
-		"server.unix.socket":    defaultConfigPath() + "/pomo.sock",
-		"server.datetimeformat": "2006-01-02 15:04",
-		"server.log_requests":   true,
+	viper.SetDefault("server.name", "pomo")
+	viper.SetDefault("server.version", "debug")
+	viper.SetDefault("server.type", "rest")
+	viper.SetDefault("server.rest.host", "")
+	viper.SetDefault("server.rest.port", "8080")
+	viper.SetDefault("server.unix.socket", defaultConfigPath()+"/pomo.sock")
+	viper.SetDefault("server.datetimeformat", "2006-01-02 15:04")
+	viper.SetDefault("server.log_requests", true)
 
-		// Database Settings
-		"database.username":              "postgres",
-		"database.password":              "password",
-		"database.host":                  "postgres",
-		"database.port":                  5432,
-		"database.database":              "pomo",
-		"database.type":                  "sqlite",
-		"database.auto_create":           true,
-		"database.search_path":           "",
-		"database.sslmode":               "disable",
-		"database.retries":               5,
-		"database.sleep_between_retries": "7s",
-		"database.max_connections":       40,
-		"database.log_queries":           true,
-		"database.path":                  defaultConfigPath() + "/pomo.db",
-	}, "."), nil)
+	viper.SetDefault("database.username", "postgres")
+	viper.SetDefault("database.password", "password")
+	viper.SetDefault("database.host", "postgres")
+	viper.SetDefault("database.port", 5432)
+	viper.SetDefault("database.database", "pomo")
+	viper.SetDefault("database.type", "sqlite")
+	viper.SetDefault("database.auto_create", true)
+	viper.SetDefault("database.search_path", "")
+	viper.SetDefault("database.sslmode", "disable")
+	viper.SetDefault("database.retries", 5)
+	viper.SetDefault("database.sleep_between_retries", "7s")
+	viper.SetDefault("database.max_connections", 40)
+	viper.SetDefault("database.log_queries", true)
+	viper.SetDefault("database.path", defaultConfigPath()+"/pomo.db")
+
+	var config Config
+	viper.Unmarshal(&config)
+	return &config
 }
 
 func defaultConfigPath() string {

@@ -6,10 +6,10 @@ import (
 	"net"
 	"os"
 
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/joao.rufino/pomo/pkg/core/models"
-	serverStore "github.com/joao.rufino/pomo/pkg/store"
-	"github.com/knadh/koanf"
+	"github.com/joaorufino/pomo/pkg/conf"
+	"github.com/joaorufino/pomo/pkg/core"
+	"github.com/joaorufino/pomo/pkg/core/models"
+	serverStore "github.com/joaorufino/pomo/pkg/store"
 	"go.uber.org/zap"
 )
 
@@ -149,7 +149,7 @@ func (s UnixServer) updateStatus(buffer []byte, conn net.Conn) {
 }
 
 // makeRequest sends a message to the server
-//using the protocol structure
+// using the protocol structure
 func (s UnixServer) sendResponse(cid models.CmdID, payload interface{}, conn net.Conn) error {
 	raw, err := json.Marshal(&models.Protocol{Cid: cid, Payload: payload})
 	maybe(err, s.logger)
@@ -158,22 +158,22 @@ func (s UnixServer) sendResponse(cid models.CmdID, payload interface{}, conn net
 	return nil
 }
 
-//Starts the server
+// Starts the server
 func (s UnixServer) Start() {
 	s.running = true
 	s.listen()
 }
 
-//Stops the server
+// Stops the server
 func (s UnixServer) Stop() {
 	s.running = false
 	s.listener.Close()
 	s.store.Close()
 }
 
-//Initializes the server structure
-func (s UnixServer) Init(k *koanf.Koanf, runner models.Runner) (*UnixServer, error) {
-	socketPath := k.String("server.unix.socket")
+// Initializes the server structure
+func (s UnixServer) Init(config *conf.Config) (*UnixServer, error) {
+	socketPath := config.Server.UnixSocket
 	if _, err := os.Stat(socketPath); err == nil {
 		_, err := net.Dial("unix", socketPath)
 		//if error then sock file was saved after crash

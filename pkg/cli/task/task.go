@@ -3,9 +3,9 @@ package task
 import (
 	"os"
 
-	"github.com/joao.rufino/pomo/pkg/cli"
-	"github.com/joao.rufino/pomo/pkg/client"
-	"github.com/joao.rufino/pomo/pkg/core"
+	"github.com/joaorufino/pomo/pkg/cli"
+	"github.com/joaorufino/pomo/pkg/client"
+	"github.com/joaorufino/pomo/pkg/core"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -15,14 +15,16 @@ var (
 )
 
 // task command
-//  pomo
-//   ├── task
-//   │   ├── create
-//   │   ├── delete
-//   │   ├── list
-//   │   ├── start
-//   │   └── status
-///
+//
+//	pomo
+//	 ├── task
+//	 │   ├── create
+//	 │   ├── delete
+//	 │   ├── list
+//	 │   ├── start
+//	 │   └── status
+//
+// /
 // NewServerCommand returns a cobra command for `server` subcommands
 func NewTaskCommand(pomoCli cli.Cli) *cobra.Command {
 	taskCmd := &cobra.Command{

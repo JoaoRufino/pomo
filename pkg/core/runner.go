@@ -3,7 +3,7 @@ package core
 import (
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/core/models"
 )
 
 type Runner interface {

@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/core/models"
-	"github.com/joao.rufino/pomo/pkg/runner"
-	"github.com/knadh/koanf"
+	"github.com/joaorufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/runner"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -19,12 +19,11 @@ import (
 // any currently running task session.
 type RestClient struct {
 	path       string
-	config     *koanf.Koanf
 	logger     *zap.SugaredLogger
 	HTTPClient *http.Client
 }
 
-//add requestHeaders
+// add requestHeaders
 func addHeaders(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
@@ -32,7 +31,7 @@ func addHeaders(req *http.Request) {
 }
 
 // makeRequest sends a message to the server
-//using the protocol structure
+// using the protocol structure
 func (c RestClient) makeRequest(req *http.Request, payload interface{}) error {
 	addHeaders(req)
 	res, err := c.HTTPClient.Do(req)
@@ -177,20 +176,15 @@ func (c RestClient) Close() error {
 	return nil
 }
 
-func (c RestClient) Init(k *koanf.Koanf) (*RestClient, error) {
+func (c RestClient) Init() (*RestClient, error) {
 
 	return &RestClient{
 		HTTPClient: &http.Client{
 			Timeout: 5 * time.Minute,
 		},
-		config: k,
 		logger: zap.S().With("package", "restclient"),
-		path:   "http://127.0.0.1:8080",
+		path:   viper.GetString("server.path"),
 	}, nil
-}
-
-func (c RestClient) Config() *koanf.Koanf {
-	return c.config
 }
 
 func maybe(err error, logger *zap.SugaredLogger) {

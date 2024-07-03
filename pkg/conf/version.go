@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/knadh/koanf"
+	"github.com/spf13/viper"
 )
 
 // GetVersion returns version as a simple json
-func GetVersion(K *koanf.Koanf) http.HandlerFunc {
+func GetVersion() http.HandlerFunc {
 	// Version
-	version := K.String("server.version")
+	version := viper.GetString("server.version")
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		v := struct {

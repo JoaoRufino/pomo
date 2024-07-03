@@ -3,20 +3,20 @@ package client
 import (
 	"errors"
 
-	"github.com/joao.rufino/pomo/pkg/client/rest"
-	"github.com/joao.rufino/pomo/pkg/client/unix"
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/knadh/koanf"
+	"github.com/joaorufino/pomo/pkg/client/rest"
+	"github.com/joaorufino/pomo/pkg/client/unix"
+	"github.com/joaorufino/pomo/pkg/core"
+	"github.com/spf13/viper"
 )
 
-func NewClient(k *koanf.Koanf) (core.Client, error) {
-	switch k.String("server.type") {
+func NewClient() (core.Client, error) {
+	switch viper.GetString("server.type") {
 	case "unix":
 		unixClient := &unix.UnixClient{}
-		return unixClient.Init(k)
+		return unixClient.Init(viper.GetViper())
 	case "rest":
 		restClient := &rest.RestClient{}
-		return restClient.Init(k)
+		return restClient.Init(viper.GetViper())
 	}
 
 	return nil, errors.New("error creating client")

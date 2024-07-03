@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/joao.rufino/pomo/pkg/cli"
-	"github.com/joao.rufino/pomo/pkg/store"
+	"github.com/joaorufino/pomo/pkg/cli"
+	"github.com/joaorufino/pomo/pkg/store"
 	"github.com/spf13/cobra"
 )
 

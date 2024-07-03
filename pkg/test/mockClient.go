@@ -1,8 +1,8 @@
 package test
 
 import (
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/core"
+	"github.com/joaorufino/pomo/pkg/core/models"
 	"github.com/knadh/koanf"
 )
 

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/joao.rufino/pomo/pkg/cli/test"
-	testClient "github.com/joao.rufino/pomo/pkg/client/test"
-	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/cli/test"
+	testClient "github.com/joaorufino/pomo/pkg/client/test"
+	"github.com/joaorufino/pomo/pkg/core/models"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 )

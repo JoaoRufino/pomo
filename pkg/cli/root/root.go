@@ -10,10 +10,10 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/joao.rufino/pomo/pkg/cli"
-	"github.com/joao.rufino/pomo/pkg/cli/server"
-	"github.com/joao.rufino/pomo/pkg/cli/task"
-	"github.com/joao.rufino/pomo/pkg/conf"
+	"github.com/joaorufino/pomo/pkg/cli"
+	"github.com/joaorufino/pomo/pkg/cli/server"
+	"github.com/joaorufino/pomo/pkg/cli/task"
+	"github.com/joaorufino/pomo/pkg/conf"
 )
 
 var (

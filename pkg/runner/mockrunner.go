@@ -1,8 +1,8 @@
 package runner
 
 import (
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/core"
+	"github.com/joaorufino/pomo/pkg/core/models"
 )
 
 func NewMockedTaskRunner(task *models.Task, client core.Client, notifier models.Notifier) (*TaskRunner, error) {

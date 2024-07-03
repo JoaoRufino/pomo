@@ -1,18 +1,15 @@
 package server
 
 import (
-	"errors"
+	"encoding/json"
+	"fmt"
 	"log"
-	"os"
+	"net"
+	"sync"
 
-	"github.com/joao.rufino/pomo/pkg/core"
-	"github.com/joao.rufino/pomo/pkg/core/models"
-	"github.com/joao.rufino/pomo/pkg/server/rest"
-	"github.com/joao.rufino/pomo/pkg/server/unix"
-	"github.com/knadh/koanf"
-	"go.uber.org/zap"
+	"github.com/joaorufino/pomo/pkg/server/rest"
+	"github.com/joaorufino/pomo/pkg/server/unix"
 )
-
 
 // Server listens on a Unix domain socket
 // for Pomo status requests
@@ -88,7 +85,6 @@ func (s *Server) Stop() {
 	s.mu.Unlock()
 	s.listener.Close()
 }
-
 
 func NewServer(runner Runner) (*Server, error) {
 

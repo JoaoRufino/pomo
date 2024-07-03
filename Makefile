@@ -1,66 +1,76 @@
+# Docker settings
 DOCKER_CMD=docker run --rm -ti -w /build/pomo -v $$PWD:/build/pomo
 DOCKER_IMAGE=pomo-build
 
+# Version retrieval from git tags
 VERSION ?= $(shell git describe --tags 2>/dev/null)
 ifeq "$(VERSION)" ""
 	VERSION := UNKNOWN
 endif
 
+# Linker flags for embedding version info
 LDFLAGS=\
-	-X github.com/kevinschoon/pomo/pkg/internal/version.Version=$(VERSION)
+	-X github.com/joao.rufino/pomo/pkg/internal/version.Version=$(VERSION)
 
+# Default target
 .PHONY: \
+	all \
 	test \
 	docs \
 	pomo-build \
 	readme \
 	release \
 	release-linux \
-	release-darwin
+	release-darwin \
+	clean
 
-default:
-	cd cmd/pomo && \
-	go install -ldflags '${LDFLAGS}'
+# All target to run default build and tests
+all: default test
 
-bin/pomo: test
+# Default build target
+default: bin/pomo
+
+# Build the main binary
+bin/pomo: 
 	cd cmd/pomo && \
 	go build -ldflags '${LDFLAGS}' -o ../../$@
 
-#bindata.go: tomato-icon.png
-#	go-bindata -pkg main -o $@ $^
-
+# Run tests and vet
 test:
 	go test ./...
 	go vet ./...
 
+# Build Docker image for build environment
 pomo-build:
 	docker build -t $(DOCKER_IMAGE) .
 
+# Linux build targets
 bin/pomo-linux: bin/pomo-$(VERSION)-linux-amd64
-
-bin/pomo-darwin: bin/pomo-$(VERSION)-darwin-amd64
 
 bin/pomo-$(VERSION)-linux-amd64: bin
 	$(DOCKER_CMD) --env GOOS=linux --env GOARCH=amd64 $(DOCKER_IMAGE) go build -ldflags "${LDFLAGS}" -o $@
 
-bin/pomo-$(VERSION)-linux-amd64.md5:
+bin/pomo-$(VERSION)-linux-amd64.md5: bin/pomo-$(VERSION)-linux-amd64
 	md5sum bin/pomo-$(VERSION)-linux-amd64 | sed -e 's/bin\///' > $@
 
+# macOS build targets
+bin/pomo-darwin: bin/pomo-$(VERSION)-darwin-amd64
+
 bin/pomo-$(VERSION)-darwin-amd64: bin
-	# This is used to cross-compile a Darwin compatible Mach-O executable
-	# on Linux for OSX, you need to install https://github.com/tpoechtrager/osxcross
+	# Cross-compile for Darwin (macOS)
 	$(DOCKER_CMD) --env GOOS=darwin --env GOARCH=amd64 --env CC=x86_64-apple-darwin15-cc --env CGO_ENABLED=1 $(DOCKER_IMAGE) go build -ldflags "${LDFLAGS}" -o $@
 
-
-bin/pomo-$(VERSION)-darwin-amd64.md5:
+bin/pomo-$(VERSION)-darwin-amd64.md5: bin/pomo-$(VERSION)-darwin-amd64
 	md5sum bin/pomo-$(VERSION)-darwin-amd64 | sed -e 's/bin\///' > $@
 
+# Release targets
 release-linux: bin/pomo-$(VERSION)-linux-amd64 bin/pomo-$(VERSION)-linux-amd64.md5
 
 release-darwin: bin/pomo-$(VERSION)-darwin-amd64 bin/pomo-$(VERSION)-darwin-amd64.md5
 
 release: release-linux release-darwin
 
+# Documentation targets
 docs: www/data/readme.json
 	cd www && cp ../install.sh static/ && hugo -d ../docs
 
@@ -69,3 +79,12 @@ www/data/readme.json: www/data README.md
 
 www/data bin:
 	mkdir -p $@
+
+# Clean up build artifacts
+clean:
+	rm -rf bin/pomo* www/data/readme.json docs
+
+# Utility target to create necessary directories
+bin:
+	mkdir -p bin
+

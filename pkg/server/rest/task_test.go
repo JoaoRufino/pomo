@@ -29,8 +29,8 @@ import (
 
 	// Create Item
 	i := &gorestapi.Task{
-		ID:   "id",
-		Name: "name",
+		ID:   1,
+		Message: "message1",
 	}
 
 	// Mock call to item store
@@ -60,12 +60,12 @@ func TestTasksFind(t *testing.T) {
 	// Return Item
 	i := []*gorestapi.Task{
 		{
-			ID:   "id1",
-			Name: "name1",
+			ID:   1,
+			Message: "message1",
 		},
 		{
-			ID:   "id2",
-			Name: "name2",
+			ID:   2,
+			Name: "message2",
 		},
 	}
 

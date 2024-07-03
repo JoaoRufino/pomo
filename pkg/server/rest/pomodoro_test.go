@@ -7,6 +7,7 @@ import (
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/go-chi/chi"
+	"github.com/joao.rufino/pomo/pkg/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -15,15 +16,15 @@ import (
 	"github.com/snowzach/gorestapi/store"
 )
 
-func TestWidgetPost(t *testing.T) {
+func TestPomodoroPost(t *testing.T) {
 
 	// Create test server
 	r := chi.NewRouter()
 	server := httptest.NewServer(r)
 	defer server.Close()
 
-	// Mock Store and server
-	grs := new(mocks.GRStore)
+	// Mock Server
+	grs := new(fakeServer)
 	err := Setup(r, grs)
 	assert.Nil(t, err)
 
@@ -119,7 +120,7 @@ func TestWidgetDeleteByID(t *testing.T) {
 	defer server.Close()
 
 	// Mock Store and server
-	grs := new(mocks.GRStore)
+	grs := new(core.Server)
 	err := Setup(r, grs)
 	assert.Nil(t, err)
 

@@ -1,59 +1,42 @@
 package task
 
 import (
-	"database/sql"
+	"errors"
 
-	"github.com/joao.rufino/pomo/pkg/conf"
-	runnerC "github.com/joao.rufino/pomo/pkg/runner"
-	pomo "github.com/joao.rufino/pomo/pkg/server"
+	"github.com/joao.rufino/pomo/pkg/cli"
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
 )
 
-var (
-	taskId *int
-)
+type startOptions struct {
+	taskID int
+}
 
-// NewConfigCommand returns a cobra command for `config` subcommands
-func NewTaskStartCommand(cmd *cli.Command) *cobra.Command {
-	taskStartCmd := &cli.Command{
+// NewStartCommand returns a cobra command for `config` subcommands
+func NewTaskStartCommand(pomoCli cli.Cli) *cobra.Command {
+
+	options := startOptions{}
+
+	taskStartCmd := &cobra.Command{
 		Use:   "start",
 		Short: "start task",
 		Long:  `start a task`,
-		Run: func(cmd *cli.Command, args []string) {
-			_start(args...)
+		Run: func(cmd *cobra.Command, args []string) {
+			maybe(start(pomoCli, &options), pomoCli.Logger())
 		},
 	}
 
-	taskId = taskStartCmd.Flags().IntP("taskID", "t", -1, "ID of task to begin")
+	flags := taskStartCmd.Flags()
+
+	flags.IntVarP(&options.taskID, "taskID", "t", -1, "ID of task to begin")
 	taskStartCmd.MarkFlagRequired("taskID")
+
 	return taskStartCmd
 }
 
-func _start(args ...string) {
-	db, err := pomo.NewStore(conf.K.String("database.path"))
-	maybe(err)
-	defer db.Close()
-	var task *pomo.Task
-	maybe(db.With(func(tx *sql.Tx) error {
-		read, err := db.ReadTask(tx, *taskId)
-		if err != nil {
-			return err
-		}
-		task = read
-		err = db.DeletePomodoros(tx, *taskId)
-		if err != nil {
-			return err
-		}
-		task.Pomodoros = []*pomo.Pomodoro{}
-		return nil
-	}))
-	runner, err := runnerC.NewTaskRunner(task)
-	maybe(err)
-	server, err := pomo.NewServer(runner)
-	maybe(err)
-	server.Start()
-	defer server.Stop()
-	runner.Start()
-	runnerC.StartUI(runner)
+func start(pomoCli cli.Cli, options *startOptions) error {
+	if pomoCli.Client() == nil {
+		return errors.New("client not defined")
+	}
+	pomoCli.Client().StartTask(options.taskID)
+	return nil
 }

@@ -1,13 +1,18 @@
 package server
 
 import (
-	"encoding/json"
-	"fmt"
-	"net"
+	"errors"
+	"log"
 	"os"
 
-	"github.com/joao.rufino/pomo/pkg/conf"
+	"github.com/joao.rufino/pomo/pkg/core"
+	"github.com/joao.rufino/pomo/pkg/core/models"
+	"github.com/joao.rufino/pomo/pkg/server/rest"
+	"github.com/joao.rufino/pomo/pkg/server/unix"
+	"github.com/knadh/koanf"
+	"go.uber.org/zap"
 )
+
 
 // Server listens on a Unix domain socket
 // for Pomo status requests
@@ -86,24 +91,24 @@ func (s *Server) Stop() {
 
 
 func NewServer(runner Runner) (*Server, error) {
+
 	//check if socket file exists
 
-	socketPath := conf.K.String("server.socket")
-
-	if _, err := os.Stat(socketPath); err == nil {
-		_, err := net.Dial("unix", socketPath)
-		//if error then sock file was saved after crash
+	switch k.String("server.type") {
+	case "unix":
+		server := &unix.UnixServer{}
+		return server.Init(k, runner)
+	case "rest":
+		s, err := rest.New(k)
 		if err != nil {
-			os.Remove(socketPath)
-		} else {
-			// another instance of pomo is running
-			return nil, fmt.Errorf("socket %s is already in use", socketPath)
+			log.Fatalf("Could not create server", "error", err)
 		}
+		return s, nil
 	}
+
 	listener, err := net.Listen("unix", socketPath)
 	if err != nil {
 		return nil, err
 	}
 	return &Server{listener: listener, runner: runner}, nil
 }
-

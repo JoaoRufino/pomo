@@ -1,11 +1,17 @@
 package task
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/joao.rufino/pomo/pkg/cli"
+	"github.com/joao.rufino/pomo/pkg/client"
+	"github.com/joao.rufino/pomo/pkg/core"
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
+	"go.uber.org/zap"
+)
+
+var (
+	c core.Client
 )
 
 // task command
@@ -18,28 +24,36 @@ import (
 //   │   └── status
 ///
 // NewServerCommand returns a cobra command for `server` subcommands
-func NewTaskCommand(cmd *cli.Command) *cobra.Command {
+func NewTaskCommand(pomoCli cli.Cli) *cobra.Command {
 	taskCmd := &cobra.Command{
 		Use:   "task",
 		Short: "operations regarding the tasks",
 		Long:  "operations affecting the tasks",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			c, err := client.NewClient(pomoCli.Config())
+			maybe(err, pomoCli.Logger())
+			pomoCli.SetClient(&c)
+		},
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			pomoCli.Client().Close()
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},
 	}
 	taskCmd.AddCommand(
-		NewTaskCreateCommand(taskCmd),
-		NewTaskDeleteCommand(taskCmd),
-		NewTaskListCommand(taskCmd),
-		NewTaskStartCommand(taskCmd),
-		NewTaskStatusCommand(taskCmd),
+		NewTaskCreateCommand(pomoCli),
+		NewTaskDeleteCommand(pomoCli),
+		NewTaskListCommand(pomoCli),
+		NewTaskStartCommand(pomoCli),
+		NewTaskStatusCommand(pomoCli),
 	)
 	return taskCmd
 }
 
-func maybe(err error) {
+func maybe(err error, logger *zap.SugaredLogger) {
 	if err != nil {
-		fmt.Printf("Error:\n%s\n", err)
+		logger.Fatalf("Error:%s\n", err)
 		os.Exit(1)
 	}
 }

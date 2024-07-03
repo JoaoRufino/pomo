@@ -1,36 +1,31 @@
 package task
 
 import (
-	"github.com/joao.rufino/pomo/pkg/conf"
+	"github.com/joao.rufino/pomo/pkg/cli"
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
 
 	runnerC "github.com/joao.rufino/pomo/pkg/runner"
-	pomo "github.com/joao.rufino/pomo/pkg/server"
 )
 
 // NewConfigCommand returns a cobra command for `config` subcommands
-func NewTaskStatusCommand(cmd *cli.Command) *cobra.Command {
-	taskStatusCmd := &cli.Command{
+func NewTaskStatusCommand(pomoCli cli.Cli) *cobra.Command {
+	taskStatusCmd := &cobra.Command{
 		Use:   "status",
 		Short: "task status",
 		Long:  `request the tasks status`,
-		Run: func(cmd *cli.Command, args []string) {
-			_status(args...)
+		Run: func(cmd *cobra.Command, args []string) {
+			maybe(status(pomoCli), pomoCli.Logger())
 		},
 	}
 
 	return taskStatusCmd
 }
 
-func _status(args ...string) {
-	client, err := pomo.NewClient(conf.K.String("server.socket"))
+func status(pomoCli cli.Cli) error {
+	status, err := pomoCli.Client().GetServerStatus()
 	if err != nil {
-		runnerC.OutputStatus(pomo.Status{})
-		return
+		return err
 	}
-	defer client.Close()
-	status, err := client.Status()
-	maybe(err)
 	runnerC.OutputStatus(*status)
+	return nil
 }

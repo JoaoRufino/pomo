@@ -3,7 +3,7 @@
 // tomato-icon.png
 // DO NOT EDIT!
 
-package server
+package models
 
 import (
 	"bytes"

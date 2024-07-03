@@ -1,4 +1,4 @@
-package server
+package models
 
 import (
 	"io/ioutil"
@@ -8,6 +8,10 @@ import (
 	"github.com/0xAX/notificator"
 )
 
+type Runner interface {
+	Status() *Status
+	SetStatus(status Status)
+}
 type State int
 
 func (s State) String() string {
@@ -66,6 +70,12 @@ type Task struct {
 	Duration time.Duration `json:"duration"`
 }
 
+type ListResults struct {
+	Count   int64 `json:"count"`
+	Results List  `json:"results"`
+}
+type List []Task
+
 // ByID is a sortable array of tasks
 type ByID []*Task
 
@@ -75,8 +85,8 @@ func (b ByID) Less(i, j int) bool { return b[i].ID < b[j].ID }
 
 // After returns tasks that were started after the
 // provided start time.
-func After(start time.Time, tasks []*Task) []*Task {
-	filtered := []*Task{}
+func After(start time.Time, tasks []Task) []Task {
+	filtered := []Task{}
 	for _, task := range tasks {
 		if len(task.Pomodoros) > 0 {
 			if start.Before(task.Pomodoros[0].Start) {
@@ -92,6 +102,13 @@ func After(start time.Time, tasks []*Task) []*Task {
 type Pomodoro struct {
 	Start time.Time `json:"start"`
 	End   time.Time `json:"end"`
+}
+
+// PomodoroWithID is a unit for requesting
+// an update to a pomodoro to the server
+type PomodoroWithID struct {
+	TaskID   int
+	Pomodoro Pomodoro
 }
 
 // Duration returns the runtime of the pomodoro

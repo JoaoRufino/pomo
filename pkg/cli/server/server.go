@@ -1,11 +1,10 @@
 package server
 
 import (
-	"fmt"
-	"os"
+	"github.com/joao.rufino/pomo/pkg/cli"
+	"go.uber.org/zap"
 
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
 )
 
 // server command
@@ -13,11 +12,12 @@ import (
 //   ├── server
 //   │   ├── config
 //   │   ├── init
+//   |   ├── status
 //   │   └── version
 ///
 
 // NewServerCommand returns a cobra command for `server` subcommands
-func NewServerCommand(cmd *cli.Command) *cobra.Command {
+func NewServerCommand(pomoCli cli.Cli) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:   "server",
 		Short: "operations regarding the server",
@@ -28,16 +28,16 @@ func NewServerCommand(cmd *cli.Command) *cobra.Command {
 	}
 
 	serverCmd.AddCommand(
-		NewServerConfigCommand(serverCmd),
-		NewServerInitCommand(serverCmd),
-		NewServerVersionCommand(serverCmd),
+		NewServerConfigCommand(pomoCli),
+		NewServerStatusCommand(pomoCli),
+		NewServerInitCommand(pomoCli),
+		NewServerVersionCommand(pomoCli),
 	)
 	return serverCmd
 }
 
-func maybe(err error) {
+func maybe(err error, logger *zap.SugaredLogger) {
 	if err != nil {
-		fmt.Printf("Error:\n%s\n", err)
-		os.Exit(1)
+		logger.Fatalf("Error:%s", err)
 	}
 }

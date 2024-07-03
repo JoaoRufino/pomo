@@ -1,39 +1,37 @@
 package task
 
 import (
-	"database/sql"
-
-	"github.com/joao.rufino/pomo/pkg/conf"
-	pomo "github.com/joao.rufino/pomo/pkg/server"
+	"github.com/joao.rufino/pomo/pkg/cli"
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
 )
 
-var (
-	delete_taskId *int
-)
+type deleteOptions struct {
+	taskID int
+}
 
 // NewConfigCommand returns a cobra command for `config` subcommands
-func NewTaskDeleteCommand(cmd *cli.Command) *cobra.Command {
-	taskDeleteCmd := &cli.Command{
+func NewTaskDeleteCommand(pomoCli cli.Cli) *cobra.Command {
+
+	options := &deleteOptions{}
+
+	taskDeleteCmd := &cobra.Command{
 		Use:   "delete",
 		Short: "delete task",
 		Long:  `delete task using id`,
-		Run: func(cmd *cli.Command, args []string) {
-			_delete(args...)
+		Run: func(cmd *cobra.Command, args []string) {
+			delete(pomoCli, options)
 		},
 	}
 
-	delete_taskId = taskDeleteCmd.Flags().IntP("taskID", "t", -1, "ID of task to begin")
+	flags := taskDeleteCmd.Flags()
+
+	flags.IntVarP(&options.taskID, "taskID", "t", -1, "ID of task to begin")
 	taskDeleteCmd.MarkFlagRequired("taskID")
+
 	return taskDeleteCmd
 }
 
-func _delete(args ...string) {
-	db, err := pomo.NewStore(conf.K.String("database.path"))
-	maybe(err)
-	defer db.Close()
-	maybe(db.With(func(tx *sql.Tx) error {
-		return db.DeleteTask(tx, *delete_taskId)
-	}))
+func delete(pomoCli cli.Cli, options *deleteOptions) {
+	err := pomoCli.Client().DeleteTaskByID(options.taskID)
+	maybe(err, pomoCli.Logger())
 }

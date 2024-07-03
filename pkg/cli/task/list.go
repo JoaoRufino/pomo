@@ -1,71 +1,96 @@
 package task
 
 import (
-	"database/sql"
 	"encoding/json"
 	"os"
-	"sort"
 	"time"
 
-	"github.com/joao.rufino/pomo/pkg/conf"
+	"github.com/joao.rufino/pomo/pkg/cli"
+	"github.com/joao.rufino/pomo/pkg/core/models"
 	runnerC "github.com/joao.rufino/pomo/pkg/runner"
-	pomo "github.com/joao.rufino/pomo/pkg/server"
 	"github.com/spf13/cobra"
-	cli "github.com/spf13/cobra"
 )
 
-var (
-	asJSON *bool
-	assend *bool
-	all    *bool
-	limit  *int
-	period *string
-)
+type listOptions struct {
+	asJSON   bool
+	sort     bool
+	all      bool
+	limit    int
+	duration string
+}
+
+func validateTaskListOptions(opts *listOptions) (*listOptions, error) {
+
+	if opts.limit <= 1 {
+		opts.limit = 1
+	}
+
+	_, err := time.ParseDuration(opts.duration)
+	if err != nil {
+		opts.duration = "24h"
+	}
+
+	return opts, nil
+}
 
 // NewConfigCommand returns a cobra command for `config` subcommands
-func NewTaskListCommand(cmd *cli.Command) *cobra.Command {
-	taskListCmd := &cli.Command{
-		Use:   "list",
+func NewTaskListCommand(pomoCli cli.Cli) *cobra.Command {
+
+	options := listOptions{}
+
+	taskListCmd := &cobra.Command{
+		Use:   "list [OPTIONS]",
 		Short: "List tasks",
 		Long:  `List all tasks`,
-		Run: func(cmd *cli.Command, args []string) {
-			_list(args...)
+		Run: func(cmd *cobra.Command, args []string) {
+			maybe(list(pomoCli, &options), pomoCli.Logger())
 		},
 	}
 
-	asJSON = taskListCmd.Flags().BoolP("json", "j", false, "output task history as JSON")
-	assend = taskListCmd.Flags().BoolP("sort", "s", false, "sort tasks assending in age")
-	all = taskListCmd.Flags().BoolP("all", "a", true, "output all tasks")
-	limit = taskListCmd.Flags().IntP("limit", "n", 0, "limit the number of results by n")
-	period = taskListCmd.Flags().StringP("duration", "d", "24h", "show tasks within this duration")
+	flags := taskListCmd.Flags()
+
+	flags.BoolVarP(&options.asJSON, "json", "j", false, "output task history as JSON")
+	flags.BoolVarP(&options.sort, "sort", "s", false, "sort tasks assending in age")
+	flags.BoolVarP(&options.all, "all", "a", true, "output all tasks")
+	flags.IntVarP(&options.limit, "limit", "n", 0, "limit the number of resultsby n")
+	flags.StringVarP(&options.duration, "duration", "d", "24h", "show tasks within this duration")
 
 	return taskListCmd
 }
 
-func _list(args ...string) {
-	parsed, err := time.ParseDuration(*period)
-	maybe(err)
-	db, err := pomo.NewStore(conf.K.String("database.path"))
-	maybe(err)
-	defer db.Close()
-	maybe(db.With(func(tx *sql.Tx) error {
-		tasks, err := db.ReadTasks(tx)
-		maybe(err)
-		if *assend {
-			sort.Sort(sort.Reverse(pomo.ByID(tasks)))
+func list(pomoCli cli.Cli, options *listOptions) error {
+	pomoCli.Logger().Debug("Cli request for task list")
+	parsed, err := time.ParseDuration(options.duration)
+	if err != nil {
+		return err
+	}
+
+	//get the list from the Server
+
+	list := models.List{}
+	if plist, err := pomoCli.Client().GetTaskList(); err != nil {
+		return err
+	} else {
+		list = *plist
+	}
+
+	//parse it accordingly
+	pomoCli.Logger().Debugf("List has %d tasks", len(list))
+	if options.sort {
+		//sort.Sort(sort.Reverse(list))
+	}
+	if !options.all {
+		list = models.After(time.Now().Add(-parsed), list)
+	}
+	if options.limit > 0 && (len(list) > options.limit) {
+		list = list[0:options.limit]
+	}
+	if options.asJSON {
+		if err := json.NewEncoder(os.Stdout).Encode(&list); err != nil {
+			return err
 		}
-		if !*all {
-			tasks = pomo.After(time.Now().Add(-parsed), tasks)
-		}
-		if *limit > 0 && (len(tasks) > *limit) {
-			tasks = tasks[0:*limit]
-		}
-		if *asJSON {
-			maybe(json.NewEncoder(os.Stdout).Encode(tasks))
-			return nil
-		}
-		maybe(err)
-		runnerC.SummerizeTasks(tasks)
-		return nil
-	}))
+	} else {
+		runnerC.SummarizeTasks(pomoCli.Client().Config().String("server.datatimeformat"), list)
+	}
+	return nil
 }

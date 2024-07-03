@@ -1,8 +1,8 @@
 package core
 
 import (
+	"github.com/joaorufino/pomo/pkg/conf"
 	"github.com/joaorufino/pomo/pkg/core/models"
-	"github.com/knadh/koanf"
 )
 
 type Client interface {
@@ -13,6 +13,6 @@ type Client interface {
 	GetTaskList() (*models.List, error)
 	StartTask(taskID int) error
 	UpdateStatus(status *models.Status) error
-	Config() *koanf.Koanf
+	Config() *conf.Config
 	CreatePomodoro(taskID int, pomodoro models.Pomodoro) error
 }

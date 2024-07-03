@@ -19,13 +19,12 @@ type MockCli struct {
 func NewMockCli() *MockCli {
 	cli := &MockCli{}
 
-	// Global koanf configuration with "." for delimeter
-	cli.config = ConfFromDefaults(cli.config)
+	cli.config = ConfFromDefaults()
 
-	client := test.NewMockClient(cli.config, test.MockClientOptions{})
+	client := test.NewMockClient(nil)
 	cli.client = client
 
-	conf.InitLogger(cli.Config())
+	conf.InitLogger()
 	cli.logger = zap.S().With("package", "test")
 	return cli
 }

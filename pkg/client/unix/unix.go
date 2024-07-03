@@ -19,6 +19,7 @@ import (
 type UnixClient struct {
 	path   string
 	logger *zap.SugaredLogger
+	config *conf.Config
 }
 
 // makeRequest sends a message to the server
@@ -192,8 +193,9 @@ func (c UnixClient) Close() error {
 }
 
 func (c UnixClient) Init(config *conf.Config) (*UnixClient, error) {
-	c.path = config.Server.Unix.Socket
+	c.path = config.Server.UnixSocket
 	c.logger = zap.S().With("package", "client")
+	c.config = config
 	return &c, nil
 }
 
@@ -208,4 +210,8 @@ func valid(ok bool, logger *zap.SugaredLogger, expected interface{}, received in
 	if !ok {
 		logger.Fatalf(models.ErrWrongDataType, expected, received)
 	}
+}
+
+func (c UnixClient) Config() *conf.Config {
+	return c.config
 }

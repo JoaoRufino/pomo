@@ -135,6 +135,7 @@ func (t *TaskRunner) SetStatus(status models.Status) {
 }
 
 func NewTaskRunner(client core.Client, task *models.Task) (*TaskRunner, error) {
+	config := client.Config()
 	tr := &TaskRunner{
 		taskID:       task.ID,
 		taskMessage:  task.Message,
@@ -144,7 +145,7 @@ func NewTaskRunner(client core.Client, task *models.Task) (*TaskRunner, error) {
 		state:        models.State(0),
 		pause:        make(chan bool),
 		toggle:       make(chan bool),
-		notifier:     models.NewXnotifier(client.Config().String("icon.path")),
+		notifier:     models.NewXnotifier(config.Runner.IconPath),
 		duration:     task.Duration,
 	}
 	return tr, nil

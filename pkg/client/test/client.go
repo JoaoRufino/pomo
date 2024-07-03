@@ -11,8 +11,8 @@ package test
 import (
 	reflect "reflect"
 
+	"github.com/joaorufino/pomo/pkg/conf"
 	models "github.com/joaorufino/pomo/pkg/core/models"
-	koanf "github.com/knadh/koanf"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -54,10 +54,10 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 }
 
 // Config mocks base method.
-func (m *MockClient) Config() *koanf.Koanf {
+func (m *MockClient) Config() *conf.Config {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Config")
-	ret0, _ := ret[0].(*koanf.Koanf)
+	ret0, _ := ret[0].(*conf.Config)
 	return ret0
 }
 

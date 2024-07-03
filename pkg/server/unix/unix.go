@@ -184,7 +184,7 @@ func (s UnixServer) Init(config *conf.Config) (*UnixServer, error) {
 			return nil, fmt.Errorf("socket %s is already in use", socketPath)
 		}
 	}
-	store, err := serverStore.NewStore(k)
+	store, err := serverStore.NewStore(config)
 	maybe(err, s.logger)
 
 	//open the socket

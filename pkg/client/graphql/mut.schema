@@ -1,0 +1,44 @@
+type Query {
+    task(id: Int!): Task
+    tasks: [Task]
+    status: Status
+}
+
+type Mutation {
+    createTask(input: TaskInput!): Task
+    createPomodoro(taskID: Int!, input: PomodoroInput!): Pomodoro
+    deleteTask(id: Int!): Boolean
+    updateStatus(input: StatusInput!): Status
+}
+
+type Task {
+    id: Int
+    title: String
+    description: String
+    pomodoros: [Pomodoro]
+}
+
+input TaskInput {
+    title: String!
+    description: String
+}
+
+type Pomodoro {
+    id: Int
+    duration: Int
+}
+
+input PomodoroInput {
+    duration: Int!
+}
+
+type Status {
+    runningTasks: [Task]
+    message: String
+}
+
+input StatusInput {
+    runningTasks: [Int]
+    message: String
+}
+

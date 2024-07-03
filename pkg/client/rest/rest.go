@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/joaorufino/pomo/pkg/conf"
 	"github.com/joaorufino/pomo/pkg/core/models"
 	"github.com/joaorufino/pomo/pkg/runner"
 	"github.com/spf13/viper"
@@ -21,6 +22,7 @@ type RestClient struct {
 	path       string
 	logger     *zap.SugaredLogger
 	HTTPClient *http.Client
+	conf       *conf.Config
 }
 
 // add requestHeaders
@@ -176,7 +178,7 @@ func (c RestClient) Close() error {
 	return nil
 }
 
-func (c RestClient) Init() (*RestClient, error) {
+func (c RestClient) Init(conf *conf.Config) (*RestClient, error) {
 
 	return &RestClient{
 		HTTPClient: &http.Client{
@@ -192,4 +194,8 @@ func maybe(err error, logger *zap.SugaredLogger) {
 		logger.Fatalf("Error:\n%s\n", err)
 		os.Exit(1)
 	}
+}
+
+func (c RestClient) Config() *conf.Config {
+	return c.conf
 }

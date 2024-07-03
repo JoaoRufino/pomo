@@ -1,13 +1,13 @@
 package test
 
 import (
+	"github.com/joaorufino/pomo/pkg/conf"
 	"github.com/joaorufino/pomo/pkg/core"
 	"github.com/joaorufino/pomo/pkg/core/models"
-	"github.com/knadh/koanf"
 )
 
 type MockClient struct {
-	config  *koanf.Koanf
+	config  *conf.Config
 	options MockClientOptions
 }
 
@@ -17,7 +17,7 @@ type MockClientOptions struct {
 	taskID int
 }
 
-func NewMockClient(k *koanf.Koanf, options MockClientOptions) core.Client {
+func NewMockClient(k *conf.Config, options MockClientOptions) core.Client {
 	client := MockClient{}
 	client.SetServerStatus(&models.Status{})
 	client.SetList(&models.List{})
@@ -71,10 +71,10 @@ func (c *MockClient) StartTask(taskID int) error {
 func (c *MockClient) UpdateStatus(status *models.Status) error {
 	return nil
 }
-func (c *MockClient) Config() *koanf.Koanf {
+func (c *MockClient) Config() *conf.Config {
 	return c.config
 }
-func (c *MockClient) SetConfig(k *koanf.Koanf) {
+func (c *MockClient) SetConfig(k *conf.Config) {
 	c.config = k
 }
 

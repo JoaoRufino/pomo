@@ -33,15 +33,16 @@ func NewRootCommand(pomoCli *cli.PomoCli) *cobra.Command {
 
 // Execute starts the program
 func Execute() {
-	pomoCli, err := cli.NewPomoCli()
+	pomoCli, err := cli.NewPomoCli("")
 	if err != nil {
 		log.Fatal(err)
 	}
 	rootCmd := NewRootCommand(pomoCli)
 	configFile := rootCmd.PersistentFlags().StringP("config", "c", "", "config file")
 	if configFile != nil && *configFile != "" {
-		err = conf.ConfFromFile(pomoCli.Config(), *configFile)
+		config, err := conf.LoadConfig(*configFile)
 		maybe(err, pomoCli.Logger())
+		pomoCli.SetConfig(config)
 	}
 	rootCmd.AddCommand(
 		server.NewServerCommand(pomoCli),

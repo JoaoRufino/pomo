@@ -1,0 +1,51 @@
+logger:
+  level: debug
+  encoding: console
+  color: true
+  devMode: true
+  disableCaller: false
+  disableStacktrace: true
+
+pidfile: ""
+
+server:
+  name: pomo
+  version: debug
+  type: rest 
+  restHost: ""
+  restPort: "8080"
+  unixSocket: ~/.pomo/pomo.sock
+  datetimeFormat: "2006-01-02 15:04"
+  logRequests: true
+
+database:
+  username: postgres
+  password: password
+  host: postgres
+  port: 5432
+  database: pomo
+  type: sqlite
+  autoCreate: true
+  searchPath: ""
+  sslmode: disable
+  retries: 5
+  sleepBetweenRetries: "7s"
+  maxConnections: 40
+  logQueries: true
+  path: ~/.pomo/pomo.db
+
+cors:
+  allowedOrigins: []
+  allowedMethods: []
+  allowedHeaders: []
+  allowCredentials: false
+  maxAge: 0
+
+runner:
+  colors: {}
+  datetimeFmt: "2006-01-02 15:04"
+  basePath: ~/.pomo
+  dbPath: ~/.pomo/pomo.db
+  socketPath: ~/.pomo/pomo.sock
+  iconPath: ~/.pomo/icon.png
+

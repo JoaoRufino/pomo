@@ -90,7 +90,8 @@ func list(pomoCli cli.Cli, options *listOptions) error {
 			return err
 		}
 	} else {
-		runnerC.SummarizeTasks(pomoCli.Client().Config().String("server.datatimeformat"), list)
+		config := pomoCli.Client().Config()
+		runnerC.SummarizeTasks(config.Server.DatetimeFormat, list)
 	}
 	return nil
 }

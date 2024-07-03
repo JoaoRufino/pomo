@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/joaorufino/pomo/pkg/core/models"
+	"github.com/joaorufino/pomo/pkg/runner/test"
 	"github.com/joaorufino/pomo/pkg/store"
 )
 

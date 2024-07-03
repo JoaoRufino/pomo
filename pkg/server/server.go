@@ -7,25 +7,23 @@ import (
 	"net"
 	"sync"
 
+	"github.com/joaorufino/pomo/pkg/conf"
+	"github.com/joaorufino/pomo/pkg/core"
+	"github.com/joaorufino/pomo/pkg/core/models"
 	"github.com/joaorufino/pomo/pkg/server/rest"
-	"github.com/joaorufino/pomo/pkg/server/unix"
 )
 
-// Server listens on a Unix domain socket
+// Session listens on a Unix domain socket
 // for Pomo status requests
-type Server struct {
+type Session struct {
 	listener net.Listener
-	runner   Runner
+	runner   models.Runner
 	running  bool
 	mu       sync.Mutex
 }
 
-type Runner interface {
-	Status() *Status
-}
-
 // listen handles incoming connections and responds with the current status
-func (s *Server) listen() {
+func (s *Session) listen() {
 	for {
 		s.mu.Lock()
 		if !s.running {
@@ -46,7 +44,7 @@ func (s *Server) listen() {
 }
 
 // handleConnection processes a single connection
-func (s *Server) handleConnection(conn net.Conn) {
+func (s *Session) handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	buf := make([]byte, 512)
@@ -71,7 +69,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 }
 
 // Start begins the server's listening process
-func (s *Server) Start() {
+func (s *Session) Start() {
 	s.mu.Lock()
 	s.running = true
 	s.mu.Unlock()
@@ -79,32 +77,33 @@ func (s *Server) Start() {
 }
 
 // Stop halts the server's listening process
-func (s *Server) Stop() {
+func (s *Session) Stop() {
 	s.mu.Lock()
 	s.running = false
 	s.mu.Unlock()
 	s.listener.Close()
 }
 
-func NewServer(runner Runner) (*Server, error) {
-
-	//check if socket file exists
-
-	switch k.String("server.type") {
+// NewServer creates a new server based on the configuration
+func NewServer(config *conf.Config, runner models.Runner) (core.Server, error) {
+	switch config.Server.Type {
 	case "unix":
-		server := &unix.UnixServer{}
-		return server.Init(k, runner)
-	case "rest":
-		s, err := rest.New(k)
+		listener, err := net.Listen("unix", config.Server.UnixSocket)
 		if err != nil {
-			log.Fatalf("Could not create server", "error", err)
+			return nil, err
+		}
+		session := &Session{listener: listener, runner: runner}
+		session.Start()
+		return session, nil
+
+	case "rest":
+		s, err := rest.New(config)
+		if err != nil {
+			log.Fatalf("Could not create server: %v", err)
 		}
 		return s, nil
-	}
 
-	listener, err := net.Listen("unix", socketPath)
-	if err != nil {
-		return nil, err
+	default:
+		return nil, fmt.Errorf("unknown server type: %s", config.Server.Type)
 	}
-	return &Server{listener: listener, runner: runner}, nil
 }

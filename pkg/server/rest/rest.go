@@ -7,10 +7,10 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+	"github.com/joaorufino/pomo/pkg/conf"
 	"github.com/joaorufino/pomo/pkg/core"
 	"github.com/joaorufino/pomo/pkg/core/models"
 	"github.com/joaorufino/pomo/pkg/store"
-	"github.com/knadh/koanf"
 	"go.uber.org/zap"
 )
 
@@ -18,7 +18,7 @@ import (
 type RestServer struct {
 	logger *zap.SugaredLogger
 	router chi.Router
-	conf   *koanf.Koanf
+	conf   *conf.Config
 	store  core.Store
 	server *http.Server
 	status models.Status
@@ -34,7 +34,6 @@ const (
 
 // Setup will setup the API listener
 func (s *RestServer) Setup() error {
-
 	// Base Functions
 	s.router.Get(TASK_PATH, s.TasksFind())
 	s.router.Post(TASK_PATH, s.TaskSave())
@@ -49,37 +48,41 @@ func (s *RestServer) Setup() error {
 	s.router.Post(STATUS_PATH, s.StatusSave())
 
 	return nil
-
 }
 
 // New will setup the API listener
-func New(config *koanf.Koanf) (core.Server, error) {
-
+func New(config *conf.Config) (core.Server, error) {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 
 	// Log Requests - Use appropriate format depending on the encoding
-	if config.Bool("server.log_requests") {
-		r.Use(loggerHTTPMiddlewareDefault(config.Bool("server.log_requests_body"), config.Bool("server.log_duration")))
+	if config.Server.LogRequests {
+		r.Use(loggerHTTPMiddlewareDefault(config.Server.LogRequestsBody, config.Server.LogDuration))
 	}
 
 	// CORS Config
 	r.Use(cors.New(cors.Options{
-		AllowedOrigins:   config.Strings("server.cors.allowed_origins"),
-		AllowedMethods:   config.Strings("server.cors.allowed_methods"),
-		AllowedHeaders:   config.Strings("server.cors.allowed_headers"),
-		AllowCredentials: config.Bool("server.cors.allowed_credentials"),
-		MaxAge:           config.Int("server.cors.max_age"),
+		AllowedOrigins:   config.CORS.AllowedOrigins,
+		AllowedMethods:   config.CORS.AllowedMethods,
+		AllowedHeaders:   config.CORS.AllowedHeaders,
+		AllowCredentials: config.CORS.AllowCredentials,
+		MaxAge:           config.CORS.MaxAge,
 	}).Handler)
 
 	store, _ := store.NewStore(config)
+
+	server := &http.Server{
+		Addr:    net.JoinHostPort(config.Server.RestHost, config.Server.RestPort),
+		Handler: r,
+	}
 
 	s := &RestServer{
 		conf:   config,
 		logger: zap.S().With("package", "restServer"),
 		router: r,
 		store:  store,
+		server: server,
 	}
 
 	// RestInterface
@@ -87,16 +90,10 @@ func New(config *koanf.Koanf) (core.Server, error) {
 		s.logger.Fatalf("Could not setup rest interface: %v", err)
 	}
 	return s, nil
-
 }
 
-// ListenAndServe will listen for requests
+// Start will listen for requests
 func (s *RestServer) Start() {
-
-	s.server = &http.Server{
-		Addr:    net.JoinHostPort(s.conf.String("server.rest.host"), s.conf.String("server.rest.port")),
-		Handler: s.router,
-	}
 
 	// Listen
 	listener, err := net.Listen("tcp", s.server.Addr)
@@ -109,7 +106,7 @@ func (s *RestServer) Start() {
 			s.logger.Fatalw("API Listen error", "error", err, "address", s.server.Addr)
 		}
 	}()
-	s.logger.Infow("API Listening", "address", s.server.Addr, "tls", s.conf.Bool("server.tls"))
+	s.logger.Infow("API Listening", "address", s.server.Addr, "tls", s.conf.Server.TLS)
 }
 
 // Router returns the router

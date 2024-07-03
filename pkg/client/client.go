@@ -3,20 +3,24 @@ package client
 import (
 	"errors"
 
+	"github.com/joaorufino/pomo/pkg/client/graphql"
 	"github.com/joaorufino/pomo/pkg/client/rest"
 	"github.com/joaorufino/pomo/pkg/client/unix"
+	"github.com/joaorufino/pomo/pkg/conf"
 	"github.com/joaorufino/pomo/pkg/core"
-	"github.com/spf13/viper"
 )
 
-func NewClient() (core.Client, error) {
-	switch viper.GetString("server.type") {
+func NewClient(conf *conf.Config) (core.Client, error) {
+	switch conf.Server.Type {
 	case "unix":
 		unixClient := &unix.UnixClient{}
-		return unixClient.Init(viper.GetViper())
+		return unixClient.Init(conf)
 	case "rest":
 		restClient := &rest.RestClient{}
-		return restClient.Init(viper.GetViper())
+		return restClient.Init(conf)
+	case "graphql":
+		graphqlClient := &graphql.GraphQLClient{}
+		return graphqlClient.Init(conf)
 	}
 
 	return nil, errors.New("error creating client")

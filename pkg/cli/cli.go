@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"reflect"
+
 	"github.com/joaorufino/pomo/pkg/conf"
 	"github.com/joaorufino/pomo/pkg/core"
 	"go.uber.org/zap"
@@ -30,25 +32,20 @@ type PomoCli struct {
 
 // NewPomoCli creates a new instance of PomoCli.
 func NewPomoCli(configFile string) (*PomoCli, error) {
-	pomoCli := &PomoCli{}
-
 	// Load configuration
-	var err error
-	if configFile != "" {
-		pomoCli.config, err = conf.LoadConfig(configFile)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		pomoCli.config = conf.LoadDefaultConfig()
+	config, err := conf.LoadConfig(configFile)
+	if err != nil {
+		return nil, err
 	}
 
-	// Initialize the logger
+	// Initialize the logger based on the configuration
 	conf.InitLogger()
+	logger := zap.S().With("package", "cli")
 
-	pomoCli.logger = zap.S().With("package", "cli")
-
-	return pomoCli, nil
+	return &PomoCli{
+		logger: logger,
+		config: config,
+	}, nil
 }
 
 func (pomoCli *PomoCli) Executable() string {
@@ -81,4 +78,23 @@ func (pomoCli *PomoCli) SetServer(server *core.Server) {
 
 func (pomoCli *PomoCli) SetClient(client core.Client) {
 	pomoCli.client = client
+}
+
+// mergeConfig merges userConfig into baseConfig
+func mergeConfig(baseConfig, userConfig *conf.Config) {
+	baseVal := reflect.ValueOf(baseConfig).Elem()
+	userVal := reflect.ValueOf(userConfig).Elem()
+
+	for i := 0; i < baseVal.NumField(); i++ {
+		baseField := baseVal.Field(i)
+		userField := userVal.Field(i)
+
+		if !userField.IsZero() {
+			baseField.Set(userField)
+		}
+	}
+}
+
+func (pomoCli *PomoCli) SetConfig(conf *conf.Config) {
+	mergeConfig(pomoCli.config, conf)
 }

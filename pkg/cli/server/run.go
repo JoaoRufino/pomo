@@ -16,6 +16,7 @@ func NewServerInitCommand(pomoCli cli.Cli) *cobra.Command {
 		Short: "run server",
 		Long:  `Start Server`,
 		Run: func(cmd *cobra.Command, args []string) { // Initialize the databse
+			pomoCli.Logger().Infof("run server requested")
 			db, err := store.NewStore(pomoCli.Config(), pomoCli.Logger())
 			maybe(err, pomoCli.Logger())
 			defer db.Close()
@@ -23,6 +24,8 @@ func NewServerInitCommand(pomoCli cli.Cli) *cobra.Command {
 			maybe(err, pomoCli.Logger())
 			pomoCli.SetServer(&serv)
 			serv.Start()
+
+			pomoCli.Logger().Infof("run server started")
 
 			conf.Stop.InitInterrupt()
 			<-conf.Stop.Chan() // Wait until Stop

@@ -11,12 +11,18 @@ pidfile: ""
 server:
   name: pomo
   version: debug
-  type: rest 
-  restHost: ""
+  type: all 
+  restHost: "localhost"
   restPort: "8080"
+  restPath: "api"
   unixSocket: .pomo/pomo.sock
   datetimeFormat: "2006-01-02 15:04"
   logRequests: true
+client:
+  type: rest
+  host: localhost
+  hostPort: 8081
+  hostType: nextjs 
 
 database:
   username: postgres
@@ -35,11 +41,18 @@ database:
   path: .pomo/pomo.db
 
 cors:
-  allowedOrigins: []
-  allowedMethods: []
-  allowedHeaders: []
-  allowCredentials: false
-  maxAge: 0
+  allowedOrigins:
+    - "*"  
+  allowedMethods:
+    - "GET"
+    - "POST"
+    - "DELETE"
+    - "OPTIONS"
+  allowedHeaders:
+    - "Content-Type"
+    - "Authorization"
+  allowCredentials: true
+  maxAge: 86400
 
 runner:
   colors: {}

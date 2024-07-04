@@ -11,7 +11,6 @@ import (
 	"github.com/joaorufino/pomo/pkg/conf"
 	"github.com/joaorufino/pomo/pkg/core/models"
 	"github.com/joaorufino/pomo/pkg/runner"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -22,7 +21,7 @@ type RestClient struct {
 	path       string
 	logger     *zap.SugaredLogger
 	HTTPClient *http.Client
-	conf       *conf.Config
+	config     *conf.Config
 }
 
 // add requestHeaders
@@ -38,7 +37,6 @@ func (c RestClient) makeRequest(req *http.Request, payload interface{}) error {
 	addHeaders(req)
 	res, err := c.HTTPClient.Do(req)
 	maybe(err, c.logger)
-
 	defer res.Body.Close()
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
@@ -120,6 +118,7 @@ func (c RestClient) GetServerStatus() (*models.Status, error) {
 // to provide the list all tasks
 func (c RestClient) GetTaskList() (*models.List, error) {
 	c.logger.Debug("received GetTaskList request")
+
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/tasks", c.path), nil)
 	if err != nil {
 		return nil, err
@@ -127,7 +126,9 @@ func (c RestClient) GetTaskList() (*models.List, error) {
 
 	response := &models.ListResults{}
 	err = c.makeRequest(req, response)
-	maybe(err, c.logger)
+	if err != nil {
+		return nil, err
+	}
 	return &response.Results, nil
 }
 
@@ -178,14 +179,15 @@ func (c RestClient) Close() error {
 	return nil
 }
 
-func (c RestClient) Init(conf *conf.Config) (*RestClient, error) {
+func (c RestClient) Init(config *conf.Config) (*RestClient, error) {
 
 	return &RestClient{
 		HTTPClient: &http.Client{
 			Timeout: 5 * time.Minute,
 		},
 		logger: zap.S().With("package", "restclient"),
-		path:   viper.GetString("server.path"),
+		path:   fmt.Sprintf("http://%s:%s/%s", config.Server.RestHost, config.Server.RestPort, config.Server.RestPath),
+		config: config,
 	}, nil
 }
 
@@ -197,5 +199,5 @@ func maybe(err error, logger *zap.SugaredLogger) {
 }
 
 func (c RestClient) Config() *conf.Config {
-	return c.conf
+	return c.config
 }

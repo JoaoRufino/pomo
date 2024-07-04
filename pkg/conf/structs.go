@@ -16,6 +16,7 @@ type Config struct {
 	Database DatabaseConfig
 	Runner   RunnerConfig
 	CORS     CORSConfig
+	Client   ClientConfig
 }
 
 // LoggerConfig represents the logger's configuration
@@ -35,6 +36,7 @@ type ServerConfig struct {
 	Type            string
 	RestHost        string
 	RestPort        string
+	RestPath        string
 	UnixSocket      string
 	DatetimeFormat  string
 	LogRequests     bool
@@ -59,6 +61,13 @@ type DatabaseConfig struct {
 	MaxConnections      int
 	LogQueries          bool
 	Path                string
+}
+
+type ClientConfig struct {
+	Type     string
+	HostType string
+	HostPort string
+	Host     string
 }
 
 // CORSConfig represents the CORS configuration

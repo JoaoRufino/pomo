@@ -25,11 +25,11 @@ type RestServer struct {
 }
 
 const (
-	TASK_PATH        = "/tasks"
+	TASK_PATH        = "/api/tasks"
 	TASK_ID_PATH     = TASK_PATH + "/{id}"
-	POMODORO_PATH    = "/pomodoros"
+	POMODORO_PATH    = "/api/pomodoros"
 	POMODORO_ID_PATH = POMODORO_PATH + "/{id}"
-	STATUS_PATH      = "/status"
+	STATUS_PATH      = "/api/status"
 )
 
 // Setup will setup the API listener

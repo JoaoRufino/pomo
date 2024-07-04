@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/joaorufino/pomo/pkg/cli"
+	"github.com/joaorufino/pomo/pkg/cli/client"
 	"github.com/joaorufino/pomo/pkg/cli/server"
 	"github.com/joaorufino/pomo/pkg/cli/task"
 	"github.com/joaorufino/pomo/pkg/conf"
@@ -18,54 +19,60 @@ import (
 
 var (
 	// Config and global logger
-	pidFile string
+	pidFile    string
+	configFile string
 )
 
+// NewRootCommand initializes the root command
 func NewRootCommand(pomoCli *cli.PomoCli) *cobra.Command {
-	return &cobra.Command{
+	rootCmd := &cobra.Command{
 		Version:           pomoCli.Version(),
 		Use:               pomoCli.Executable(),
 		PersistentPreRunE: prerun,
 		PersistentPostRun: cleanup,
 	}
 
+	// Define persistent flags
+	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "config file")
+	return rootCmd
 }
 
 // Execute starts the program
 func Execute() {
-	// load default config
 	pomoCli, err := cli.NewPomoCli("")
 	if err != nil {
 		log.Fatal(err)
 	}
 	rootCmd := NewRootCommand(pomoCli)
-	configFile := rootCmd.PersistentFlags().StringP("config", "c", "", "config file")
-	if configFile != nil && *configFile != "" {
-		config, err := conf.LoadConfig(*configFile)
+
+	// Parse the flags early to load the config file
+	rootCmd.PersistentFlags().Parse(os.Args[1:])
+	if configFile != "" {
+		config, err := conf.LoadConfig(configFile)
 		maybe(err, pomoCli.Logger())
 		pomoCli.SetConfig(config)
 	}
+
 	rootCmd.AddCommand(
 		server.NewServerCommand(pomoCli),
-		task.NewTaskCommand(pomoCli))
+		task.NewTaskCommand(pomoCli),
+		client.NewClientCommand(pomoCli),
+	)
 
 	// Run the program
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
 	}
 }
 
 func prerun(cmd *cobra.Command, args []string) error {
-	//keep track of processID this will make sure we can keep track on unexpected behaviour
-	//logic adapted from "Go Systems Programming - Milhalis Tsoukalos"
-	//"https://man7.org/linux/man-pages/man2/open.2.html"
-	// Create Pid File
-	pidFile = "" //TODO placeholder
+	// Create PID File
 	if pidFile != "" {
 		file, err := os.OpenFile(pidFile,
-			os.O_CREATE| //create if it doesnt exist
-				os.O_TRUNC| //truncates file if it already exists
-				os.O_WRONLY, //write only
+			os.O_CREATE| // create if it doesn't exist
+				os.O_TRUNC| // truncates file if it already exists
+				os.O_WRONLY, // write only
 			0666)
 		if err != nil {
 			return fmt.Errorf("could not create pid file: %s Error:%v", pidFile, err)

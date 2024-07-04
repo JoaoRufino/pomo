@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 
@@ -68,6 +69,7 @@ func list(pomoCli cli.Cli, options *listOptions) error {
 	//get the list from the Server
 	list := models.List{}
 	if plist, err := pomoCli.Client().GetTaskList(); err != nil {
+		fmt.Println(err)
 		return err
 	} else {
 		list = *plist

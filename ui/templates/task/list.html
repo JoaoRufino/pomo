@@ -1,0 +1,29 @@
+{{ define "content" }}
+<div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">Tasks</h1>
+    <button class="bg-blue-500 text-white p-2 rounded-full shadow-md"
+            hx-get="{{ .ApiUrl }}/tasks/new" 
+            hx-target="#modal-container" 
+            hx-swap="innerHTML">
+        New Task
+    </button>
+</div>
+<ul class="space-y-4">
+    {{ range .Tasks }}
+    <li class="bg-white shadow-md rounded p-4">
+        <div>
+            <h2>{{ .Message }}</h2>
+            <p>Pomodoros: {{ .NPomodoros }}</p>
+            <p>Tags: {{ range .Tags }}{{ . }} {{ end }}</p>
+            <button class="bg-red-500 text-white p-2 rounded shadow-md mt-2"
+                    hx-delete="{{ $.ApiUrl }}/tasks/{{ .ID }}" 
+                    hx-target="this" 
+                    hx-swap="outerHTML">
+                Delete
+            </button>
+        </div>
+    </li>
+    {{ end }}
+</ul>
+{{ end }}
+

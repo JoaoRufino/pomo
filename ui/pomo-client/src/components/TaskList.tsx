@@ -1,43 +1,23 @@
 import { useState, useEffect } from 'react';
-import { fetchTasks, deleteTask, createTask, Task, TaskList } from '../services/api';
+import { deleteTask, Task } from '../services/api';
 import { PlusIcon } from '@heroicons/react/24/solid';
 import Modal from './Modal';
 import TaskForm from './TaskForm';
 import TaskRunner from './TaskRunner';
 
-const TaskList = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+interface TaskListProps {
+  tasks: Task[];
+  onTaskCreated: (task: Task) => void;
+}
+
+const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskCreated }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    loadTasks();
-  }, []);
-
-  const loadTasks = async () => {
-    try {
-      const data: TaskList = await fetchTasks();
-      setTasks(data.results);
-    } catch (error) {
-      console.error('Failed to load tasks', error);
-    }
-  };
 
   const handleDelete = async (id: number) => {
     try {
       await deleteTask(id);
-      loadTasks();
     } catch (error) {
       console.error('Failed to delete task', error);
-    }
-  };
-
-  const handleCreate = async (task: Omit<Task, 'id'>) => {
-    try {
-      await createTask(task);
-      loadTasks();
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Failed to create task', error);
     }
   };
 
@@ -67,7 +47,7 @@ const TaskList = () => {
       </ul>
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
-          <TaskForm onSubmit={handleCreate} />
+          <TaskForm onTaskCreated={onTaskCreated} />
         </Modal>
       )}
     </div>

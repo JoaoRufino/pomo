@@ -4,19 +4,25 @@ import { createTask, Task } from '../services/api';
 const TaskForm: React.FC<{ onTaskCreated: (task: Task) => void }> = ({ onTaskCreated }) => {
   const [message, setMessage] = useState('');
   const [nPomodoros, setNPomodoros] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [tags, setTags] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const newTask = await createTask({ message, n_pomodoros: nPomodoros, tags });
+      const newTask = await createTask({ message, n_pomodoros: nPomodoros, duration, tags });
       onTaskCreated(newTask);
       setMessage('');
-      setNPomodoros(0);
+      setNPomodoros(2);
+      setDuration(300);
       setTags([]);
     } catch (err) {
-      setError(err.message);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
   };
 
@@ -40,6 +46,13 @@ const TaskForm: React.FC<{ onTaskCreated: (task: Task) => void }> = ({ onTaskCre
           type="number"
           value={nPomodoros}
           onChange={(e) => setNPomodoros(Number(e.target.value))}
+          className="border p-2 w-full"
+          required
+        />
+        <input
+          type="number"
+          value={duration}
+          onChange={(e) => setDuration(Number(e.target.value))}
           className="border p-2 w-full"
           required
         />

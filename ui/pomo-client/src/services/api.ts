@@ -5,9 +5,10 @@ export type Task = {
   message: string;
   n_pomodoros: number;
   tags: string[];
+  duration: number;
 };
 
-export type TaskList = {
+export type List = {
   count: number;
   results: Task[];
 };
@@ -26,9 +27,9 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
   return response.json();
 };
 
-export const fetchTasks = async (): Promise<TaskList> => {
+export const fetchTasks = async (): Promise<List> => {
   const response = await fetch(`${API_URL}/tasks`, { headers });
-  return handleResponse<TaskList>(response);
+  return handleResponse<List>(response);
 };
 
 export const createTask = async (task: Omit<Task, 'id'>): Promise<Task> => {

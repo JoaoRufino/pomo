@@ -1,8 +1,7 @@
-import type { NextPage } from 'next';
-import { GetServerSideProps } from 'next';
+import type { NextPage, GetStaticProps } from 'next';
+import { useState } from 'react';
 import TaskList from '../components/TaskList';
 import { Task, fetchTasks } from '../services/api';
-import { useState } from 'react';
 
 type HomeProps = {
   initialTasks: Task[];
@@ -17,12 +16,12 @@ const Home: NextPage<HomeProps> = ({ initialTasks }) => {
 
   return (
     <div className="p-8">
-      <TaskList tasks={tasks} />
+      <TaskList tasks={tasks} onTaskCreated={handleTaskCreated} />
     </div>
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
     const data = await fetchTasks();
     return { props: { initialTasks: data.results } };
